@@ -19,6 +19,22 @@ export default function FinancePage() {
   const [reportByTerm, setReportByTerm] = useState<any[]>([]);
   const [reportByClass, setReportByClass] = useState<any[]>([]);
 
+ 
+
+
+
+  const [terms, setTerms] = useState<any[]>([]);
+const [classes, setClasses] = useState<any[]>([]);
+const [sessions, setSessions] = useState<any[]>([]);
+
+const [reportFilters, setReportFilters] = useState({
+  termId: "",
+  classId: "",
+  sessionId: "",
+});
+
+const [reportResult, setReportResult] = useState<any>(null);
+const [reportLoading, setReportLoading] = useState(false);
   // Modals
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
   const [showStructureModal, setShowStructureModal] = useState(false);
@@ -45,25 +61,62 @@ export default function FinancePage() {
   });
 
   const fetchData = async () => {
-    try {
-      const [invoicesRes, structuresRes, studentsRes] = await Promise.all([
+  try {
+    const [invoicesRes, structuresRes, studentsRes, sessionsRes, classesRes] =
+      await Promise.all([
         api.get("/finance/invoices"),
         api.get("/finance/fee-structures"),
         api.get("/students"),
+        api.get("/academics/sessions"),
+        api.get("/academics/classes"),
       ]);
 
-      setInvoices(invoicesRes.data || []);
-      setFeeStructures(structuresRes.data || []);
-      setStudents(studentsRes.data?.data || []);
-    } catch (err: any) {
-      if (err.response?.status === 401) {
-        removeToken();
-        router.push("/login");
-      }
-    } finally {
-      setLoading(false);
+    setInvoices(invoicesRes.data || []);
+    setFeeStructures(structuresRes.data || []);
+    setStudents(studentsRes.data?.data || []);
+    setSessions(sessionsRes.data || []);
+    setClasses(classesRes.data || []);
+
+    // Load terms from current session (or first session)
+    const sessionList = sessionsRes.data || [];
+    const currentSession =
+      sessionList.find((s: any) => s.isCurrent) || sessionList[0];
+
+    if (currentSession) {
+      const termsRes = await api.get(
+        `/academics/sessions/${currentSession.id}/terms`
+      );
+      setTerms(termsRes.data || []);
     }
-  };
+  } catch (err: any) {
+    if (err.response?.status === 401) {
+      removeToken();
+      router.push("/login");
+    }
+  } finally {
+    setLoading(false);
+  }
+};
+
+const handleReportSearch = async () => {
+  setReportLoading(true);
+  setReportResult(null);
+
+  try {
+    const res = await api.get("/finance/reports/summary", {
+      params: {
+        termId: reportFilters.termId || undefined,
+        classId: reportFilters.classId || undefined,
+        sessionId: reportFilters.sessionId || undefined,
+      },
+    });
+    setReportResult(res.data);
+  } catch (err: any) {
+    alert(err.response?.data?.message || "Failed to load report");
+  } finally {
+    setReportLoading(false);
+  }
+};
 
   const fetchReports = async () => {
     try {
@@ -472,67 +525,112 @@ export default function FinancePage() {
           )}
 
           {/* ================= REPORTS ================= */}
-          {activeTab === "reports" && (
-            <div className="space-y-8">
-              {/* By Term */}
-              <div>
-                <h3 className="text-lg font-semibold text-gray-800 mb-4">
-                  Fees Paid by Term
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                  {reportByTerm.length === 0 ? (
-                    <p className="text-gray-500">No payment data available</p>
-                  ) : (
-                    reportByTerm.map((item, index) => (
-                      <div
-                        key={index}
-                        className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm"
-                      >
-                        <h4 className="font-semibold text-gray-800">
-                          {item.termName}
-                        </h4>
-                        <p className="text-2xl font-bold text-blue-600 mt-2">
-                          ₦{Number(item.total).toLocaleString()}
-                        </p>
-                        <p className="text-sm text-gray-500 mt-1">
-                          {item.count} payment(s)
-                        </p>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
+      {activeTab === "reports" && (
+  <div className="space-y-6">
+    {/* Filters */}
+    <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-5 shadow-sm">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div>
+          <label className="block text-sm font-medium mb-1">Session</label>
+          <select
+            value={reportFilters.sessionId}
+            onChange={(e) =>
+              setReportFilters({ ...reportFilters, sessionId: e.target.value })
+            }
+            className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="">All Sessions</option>
+            {sessions.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.name}
+              </option>
+            ))}
+          </select>
+        </div>
 
-              {/* By Class */}
-              <div>
-                <h3 className="text-lg font-semibold text-gray-800 mb-4">
-                  Fees Paid by Class
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                  {reportByClass.length === 0 ? (
-                    <p className="text-gray-500">No payment data available</p>
-                  ) : (
-                    reportByClass.map((item, index) => (
-                      <div
-                        key={index}
-                        className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm"
-                      >
-                        <h4 className="font-semibold text-gray-800">
-                          {item.className}
-                        </h4>
-                        <p className="text-2xl font-bold text-emerald-600 mt-2">
-                          ₦{Number(item.total).toLocaleString()}
-                        </p>
-                        <p className="text-sm text-gray-500 mt-1">
-                          {item.count} payment(s)
-                        </p>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
+        <div>
+          <label className="block text-sm font-medium mb-1">Term</label>
+          <select
+            value={reportFilters.termId}
+            onChange={(e) =>
+              setReportFilters({ ...reportFilters, termId: e.target.value })
+            }
+            className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="">All Terms</option>
+            {terms.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-1">Class</label>
+          <select
+            value={reportFilters.classId}
+            onChange={(e) =>
+              setReportFilters({ ...reportFilters, classId: e.target.value })
+            }
+            className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="">All Classes</option>
+            {classes.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="flex items-end">
+          <button
+            onClick={handleReportSearch}
+            disabled={reportLoading}
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-lg text-sm font-medium transition disabled:opacity-50"
+          >
+            {reportLoading ? "Searching..." : "Search"}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    {/* Result */}
+    {reportResult ? (
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+          <p className="text-sm text-gray-500 font-medium">Total Fees Paid</p>
+          <p className="text-3xl font-bold text-blue-600 mt-2">
+            ₦{Number(reportResult.total || 0).toLocaleString()}
+          </p>
+        </div>
+
+        <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+          <p className="text-sm text-gray-500 font-medium">Number of Payments</p>
+          <p className="text-3xl font-bold text-emerald-600 mt-2">
+            {reportResult.count || 0}
+          </p>
+        </div>
+      </div>
+    ) : (
+      <div className="bg-white rounded-xl border border-gray-200 p-8 text-center text-gray-500">
+        Select filters and click <strong>Search</strong> to view fees paid.
+      </div>
+    )}
+
+    {/* Helper examples */}
+    <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 text-sm text-blue-800">
+      <p className="font-medium mb-1">Examples:</p>
+      <ul className="list-disc list-inside space-y-1">
+        <li>Select only <strong>First Term</strong> → total fees for that term</li>
+        <li>Select only <strong>JSS 1</strong> → total fees for that class</li>
+        <li>Select <strong>JSS 1 + First Term</strong> → class total for that term</li>
+        <li>Select a <strong>Session</strong> only → full session total</li>
+      </ul>
+    </div>
+  </div>
+)}
         </>
       )}
 

@@ -386,6 +386,45 @@ export default function AdmissionsPage() {
           </div>
         </div>
       )}
+            {/* Help Guide for Admin */}
+      <div className="mt-8 bg-blue-50 border border-blue-100 rounded-xl p-5">
+        <h3 className="text-sm font-semibold text-blue-900 mb-3">
+          How Admission Actions Work
+        </h3>
+        <p className="text-sm text-blue-800 mb-3">
+          Click <strong>View</strong> on an application to open details and take action.
+          Available buttons depend on the current status:
+        </p>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-left text-blue-900">
+                <th className="py-2 pr-4 font-semibold">Status</th>
+                <th className="py-2 font-semibold">Available Buttons</th>
+              </tr>
+            </thead>
+            <tbody className="text-blue-800">
+              <tr className="border-t border-blue-100">
+                <td className="py-2 pr-4 font-medium">SUBMITTED</td>
+                <td className="py-2">Mark Under Review, Approve, Reject</td>
+              </tr>
+              <tr className="border-t border-blue-100">
+                <td className="py-2 pr-4 font-medium">UNDER_REVIEW</td>
+                <td className="py-2">Approve, Reject</td>
+              </tr>
+              <tr className="border-t border-blue-100">
+                <td className="py-2 pr-4 font-medium">APPROVED</td>
+                <td className="py-2">Admit Student</td>
+              </tr>
+              <tr className="border-t border-blue-100">
+                <td className="py-2 pr-4 font-medium">ADMITTED / REJECTED</td>
+                <td className="py-2">No buttons</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 }
