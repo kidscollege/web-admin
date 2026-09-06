@@ -72,7 +72,7 @@ export default function AttendancePage() {
       return;
     }
     try {
-      const response = await api.get(`/attendance/student/${selectedStudentId}`);
+      const response = await api.get(`/attendance/students/${selectedStudentId}`);
       setStudentAttendance(response.data);
     } catch (error: any) {
       alert(error.response?.data?.message || "Failed to load student attendance");
@@ -86,7 +86,7 @@ export default function AttendancePage() {
     }
     try {
       const response = await api.get(
-        `/attendance/class/${classForm.classId}?termId=${classForm.termId}&date=${classForm.date}`
+        `/attendance/classes/${classForm.classId}?termId=${classForm.termId}&date=${classForm.date}`
       );
       setClassAttendance(response.data);
     } catch (error: any) {

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { getToken, removeToken } from "@/lib/auth";
 
 const menuItems = [
@@ -72,7 +73,7 @@ export default function DashboardLayout({
 }) {
   const router = useRouter();
   const pathname = usePathname();
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<{ firstName?: string; lastName?: string; role?: string } | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isDesktop, setIsDesktop] = useState(false);
   const [departmentsOpen, setDepartmentsOpen] = useState(false);
@@ -100,7 +101,7 @@ export default function DashboardLayout({
     handleResize();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
-  }, [router]);
+  }, [pathname, router]);
 
   const handleLogout = () => {
     removeToken();
@@ -114,35 +115,42 @@ export default function DashboardLayout({
     }
   };
 
+  const currentDate = new Intl.DateTimeFormat("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  }).format(new Date());
+
   return (
-    <div className="min-h-screen bg-[#F3F6FB] text-slate-800">
+    <div className="min-h-screen bg-[#F7F9FC] text-[#17233C]">
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-slate-950/50 z-40 lg:hidden"
+          className="fixed inset-0 z-40 bg-[#17233C]/25 backdrop-blur-sm lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       <aside
         className={`
-          fixed left-0 top-0 z-50 flex h-full flex-col border-r border-slate-800 bg-[#0F172A] text-slate-200 shadow-2xl shadow-slate-950/20 transition-all duration-300 ease-in-out
+          fixed left-0 top-0 z-50 flex h-full flex-col border-r border-[#E6EAF1] bg-white text-[#17233C] shadow-[8px_0_30px_rgba(23,35,60,0.04)] transition-all duration-300 ease-in-out
           ${sidebarOpen ? "w-[280px] translate-x-0" : "w-[280px] -translate-x-full lg:translate-x-0 lg:w-[90px]"}
         `}
       >
-        <div className="flex items-center justify-between border-b border-slate-800 px-5 py-5">
-          <h1 className="text-xl font-bold tracking-tight text-white">
-            {sidebarOpen || isDesktop ? (
-              <>
-                Kids<span className="text-slate-300">College</span>
-              </>
-            ) : (
-              "KC"
+        <div className="flex items-center justify-between border-b border-[#EEF1F5] px-5 py-5">
+          <Link href="/dashboard" className="flex min-w-0 items-center gap-3">
+            <Image src="/logo.png" alt="Kids College logo" width={42} height={42} className="h-10 w-10 rounded-full object-cover" />
+            {(sidebarOpen || isDesktop) && (
+              <div className="min-w-0 leading-tight">
+                <p className="truncate text-sm font-bold text-[#17233C]">Kids College</p>
+                <p className="truncate text-[10px] font-medium uppercase tracking-[0.14em] text-[#9A6B18]">Staff portal</p>
+              </div>
             )}
-          </h1>
+          </Link>
 
           <button
             onClick={() => setSidebarOpen(false)}
-            className="text-slate-400 hover:text-white lg:hidden"
+            className="text-slate-400 hover:text-[#17233C] lg:hidden"
             aria-label="Close sidebar"
           >
             <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -151,7 +159,8 @@ export default function DashboardLayout({
           </button>
         </div>
 
-        <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
+        <div className="px-5 pb-1 pt-6 text-[10px] font-bold uppercase tracking-[0.16em] text-[#A3ADBD]">Workspace</div>
+        <nav className="flex-1 space-y-1 overflow-y-auto px-3 pb-4">
           {menuItems.map((item) => {
             const isActive = pathname === item.href;
             const hasChildren = "children" in item && item.children;
@@ -163,8 +172,8 @@ export default function DashboardLayout({
                     onClick={closeSidebarOnMobile}
                     className={`flex min-w-0 flex-1 items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-all duration-200 ${
                       isActive || (hasChildren && departmentsOpen)
-                        ? "bg-slate-800 text-white shadow-md shadow-slate-900/30"
-                        : "text-slate-400 hover:bg-slate-800 hover:text-white"
+                        ? "bg-[#EEF4FF] text-[#1E4D9B] shadow-sm"
+                        : "text-[#738096] hover:bg-[#F5F7FA] hover:text-[#17233C]"
                     }`}
                   >
                     <svg
@@ -186,7 +195,7 @@ export default function DashboardLayout({
                     <button
                       type="button"
                       onClick={() => setDepartmentsOpen((open) => !open)}
-                      className="-ml-11 mr-2 rounded p-1 text-slate-400 hover:text-white"
+                      className="-ml-11 mr-2 rounded p-1 text-slate-400 hover:text-[#17233C]"
                       aria-label="Toggle department menu"
                     >
                       <svg className={`h-4 w-4 transition-transform ${departmentsOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -196,7 +205,7 @@ export default function DashboardLayout({
                   )}
                 </div>
                 {hasChildren && departmentsOpen && sidebarOpen && (
-                  <div className="ml-11 mt-1 space-y-1 border-l border-slate-700 pl-3">
+                  <div className="ml-11 mt-1 space-y-1 border-l border-[#DCE5F3] pl-3">
                     {item.children.map((child) => (
                       <Link
                         key={child.href}
@@ -204,8 +213,8 @@ export default function DashboardLayout({
                         onClick={closeSidebarOnMobile}
                         className={`block rounded-lg px-3 py-2 text-xs font-medium transition ${
                           pathname === child.href
-                            ? "bg-slate-800 text-white"
-                            : "text-slate-400 hover:bg-slate-800 hover:text-white"
+                            ? "bg-[#EEF4FF] text-[#1E4D9B]"
+                            : "text-[#738096] hover:bg-[#F5F7FA] hover:text-[#17233C]"
                         }`}
                       >
                         {child.name}
@@ -218,19 +227,19 @@ export default function DashboardLayout({
           })}
         </nav>
 
-        <div className="border-t border-slate-800 p-4">
+        <div className="border-t border-[#EEF1F5] p-4">
           {user && (
             <div className={`mb-3 px-2 ${sidebarOpen ? "block" : "lg:hidden"}`}>
-              <p className="text-sm font-medium text-white">
+                <p className="text-sm font-semibold text-[#17233C]">
                 {user.firstName} {user.lastName}
               </p>
-              <p className="mt-1 text-xs text-slate-400">{user.role}</p>
+                <p className="mt-1 text-xs text-[#8994A7]">{user.role}</p>
             </div>
           )}
 
           <button
             onClick={handleLogout}
-            className="flex w-full items-center justify-center gap-2 rounded-xl border border-red-500/25 bg-red-500/10 px-3 py-2.5 text-sm font-medium text-red-400 transition hover:bg-red-500 hover:text-white"
+            className="flex w-full items-center justify-center gap-2 rounded-lg border border-[#F4D8D8] bg-[#FFF7F7] px-3 py-2.5 text-sm font-medium text-[#C45C5C] transition hover:bg-[#C45C5C] hover:text-white"
           >
             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
@@ -252,10 +261,10 @@ export default function DashboardLayout({
         `}
       >
         <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/80 px-4 py-4 backdrop-blur-sm sm:px-6">
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
             <button
               onClick={() => setSidebarOpen(true)}
-              className="rounded-lg p-2 text-slate-600 hover:bg-slate-100 lg:hidden"
+              className="rounded-lg p-2 text-[#56647A] hover:bg-[#F0F3F7] lg:hidden"
               aria-label="Open sidebar"
             >
               <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -263,17 +272,33 @@ export default function DashboardLayout({
               </svg>
             </button>
 
-            <h2 className="truncate text-lg font-semibold text-slate-800 sm:text-xl">
-              {menuItems.find((item) => item.href === pathname)?.name || "Dashboard"}
-            </h2>
+            <div className="min-w-0 flex-1">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#9A6B18]">School management</p>
+              <h2 className="truncate text-lg font-bold text-[#17233C] sm:text-xl">
+                {menuItems.find((item) => item.href === pathname)?.name || "Dashboard"}
+              </h2>
+              <p className="mt-1 text-xs text-[#8994A7]">{currentDate}</p>
+            </div>
 
-            <div className="hidden text-sm font-medium text-slate-500 sm:block">
-              School Management System
+            <div className="hidden w-64 items-center gap-2 rounded-lg border border-[#E4E9F0] bg-[#F8FAFC] px-3 py-2 md:flex">
+              <svg className="h-4 w-4 text-[#93A0B2]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="m21 21-4.35-4.35m2.1-5.4a7.5 7.5 0 1 1-15 0 7.5 7.5 0 0 1 15 0Z" /></svg>
+              <input className="w-full bg-transparent text-sm text-[#17233C] outline-none placeholder:text-[#A1ACBC]" placeholder="Search anything..." aria-label="Search dashboard" />
+            </div>
+            <button className="relative rounded-lg p-2.5 text-[#64748B] hover:bg-[#F0F3F7]" aria-label="Notifications">
+              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9a6 6 0 1 0-12 0v.75a8.967 8.967 0 0 1-2.31 6.022c1.67.6 3.49 1.04 5.453 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0" /></svg>
+              <span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-[#C9952E]" />
+            </button>
+            <div className="hidden items-center gap-3 border-l border-[#E6EAF1] pl-4 sm:flex">
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#17366F] text-xs font-bold text-white">{user?.firstName?.[0]}{user?.lastName?.[0]}</div>
+              <div className="hidden leading-tight xl:block">
+                <p className="text-sm font-semibold text-[#17233C]">{user?.firstName} {user?.lastName}</p>
+                <p className="text-[11px] text-[#8994A7]">{user?.role}</p>
+              </div>
             </div>
           </div>
         </header>
 
-        <main className="flex-1 overflow-auto p-4 sm:p-6">{children}</main>
+        <main className="flex-1 overflow-auto p-4 sm:p-6 lg:p-8">{children}</main>
       </div>
     </div>
   );

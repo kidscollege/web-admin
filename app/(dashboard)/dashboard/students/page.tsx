@@ -43,7 +43,7 @@ export default function StudentsPage() {
   const fetchStudents = async () => {
     try {
       const res = await api.get("/students", {
-        params: { search: search || undefined },
+        params: { search: search || undefined, limit: 100 },
       });
       setStudents(res.data.data || []);
     } catch (err: any) {
