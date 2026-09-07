@@ -98,8 +98,8 @@ export default function HomePage() {
             {[
               "Nursery",
               "Kindergarten",
-              "Lower Basic",
-              "Middle Basic",
+              "Primary 1-3",
+              "Primary 4-6",
               "Junior Secondary",
               "Senior Secondary",
             ].map((level) => (

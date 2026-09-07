@@ -68,8 +68,8 @@ export default function AdmissionsPage() {
             </h2>
             <ul className="space-y-2 text-sm text-slate-600">
               <li>• Nursery and Kindergarten pupils</li>
-              <li>• Lower Basic students</li>
-              <li>• Middle Basic students</li>
+              <li>• Primary 1-3 students</li>
+              <li>• Primary 4-6 students</li>
               <li>• Junior and Senior Secondary students</li>
             </ul>
           </div>

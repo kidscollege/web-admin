@@ -526,8 +526,8 @@ export default function AcademicsPage() {
 >
   <option value="Nursery">Nursery</option>
   <option value="Kindergarten">Kindergarten</option>
-  <option value="Lower Basic">Lower Basic</option>
-  <option value="Middle Basic">Middle Basic</option>
+  <option value="Primary 1-3">Primary 1-3</option>
+  <option value="Primary 4-6">Primary 4-6</option>
   <option value="Junior">Junior</option>
   <option value="Senior">Senior</option>
 </select>

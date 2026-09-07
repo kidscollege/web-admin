@@ -215,8 +215,8 @@ export default function ApplyPage() {
                     >
                       <option>Nursery</option>
                       <option>Kindergarten</option>
-                      <option>Lower Basic</option>
-                      <option>Middle Basic</option>
+                      <option>Primary 1-3</option>
+                      <option>Primary 4-6</option>
                       <option>Junior</option>
                       <option>Senior</option>
                     </select>
