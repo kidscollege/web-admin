@@ -99,6 +99,13 @@ export default function AdmissionsPage() {
           >
             Apply Now
           </Link>
+
+          <Link
+  href="/admissions/track"
+  className="inline-block mt-4 border border-white/30 text-white px-6 py-3 rounded-full font-semibold hover:bg-white/10 transition"
+>
+  Track Application
+</Link>
         </div>
       </section>
     </div>
