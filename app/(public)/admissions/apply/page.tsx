@@ -91,7 +91,7 @@ export default function ApplyPage() {
             </h2>
             <p className="text-gray-600 text-sm mb-4">
               Thank you. Your application has been received and is now being
-              reviewed by the school.
+              reviewed by the kids college admissions team.
             </p>
             <div className="bg-green-50 rounded-xl p-4 text-sm text-green-800 space-y-1">
               <p>
@@ -117,6 +117,14 @@ export default function ApplyPage() {
               >
                 Back to Home
               </Link>
+
+              <Link
+  href="/admissions/track"
+  className="border border-gray-300 text-gray-700 px-5 py-2.5 rounded-lg text-sm font-medium text-center hover:bg-gray-50"
+>
+  Track Application Status
+</Link> 
+              
             </div>
           </div>
         ) : (
