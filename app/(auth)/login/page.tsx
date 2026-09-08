@@ -27,9 +27,14 @@ export default function LoginPage() {
       });
 
       const { access_token, user } = response.data;
-      setToken(access_token);
-      localStorage.setItem("user", JSON.stringify(user));
-      router.push("/dashboard");
+setToken(access_token);
+localStorage.setItem("user", JSON.stringify(user));
+
+if (user.role === "PARENT") {
+  router.push("/parent");
+} else {
+  router.push("/dashboard");
+}
     } catch (err: any) {
       setError(
         err.response?.data?.message || "Login failed. Please try again."
