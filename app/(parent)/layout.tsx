@@ -8,6 +8,7 @@ import { getToken, removeToken } from "@/lib/auth";
 const links = [
   { name: "Dashboard", href: "/parent" },
   { name: "My Children", href: "/parent/children" },
+  { name: "Change Password", href: "/parent/change-password" },
 ];
 
 export default function ParentLayout({
