@@ -62,19 +62,36 @@ export default function AdmissionsPage() {
   };
 
   const handleAdmit = async () => {
-    if (!selectedApp) return;
-    setSubmitting(true);
-    try {
-      await api.post(`/admissions/applications/${selectedApp.id}/admit`);
-      setShowModal(false);
-      setSelectedApp(null);
-      fetchData();
-    } catch (err: any) {
-      alert(err.response?.data?.message || "Failed to admit applicant");
-    } finally {
-      setSubmitting(false);
+  if (!selectedApp) return;
+  setSubmitting(true);
+  try {
+    const res = await api.post(
+      `/admissions/applications/${selectedApp.id}/admit`
+    );
+
+    const parentAccount = res.data?.parentAccount;
+
+    if (parentAccount?.created && parentAccount?.temporaryPassword) {
+      alert(
+        `Student admitted successfully.\n\nParent login created:\nEmail: ${parentAccount.email}\nTemporary Password: ${parentAccount.temporaryPassword}\n\nPlease copy and share this with the parent.`
+      );
+    } else if (parentAccount?.email) {
+      alert(
+        `Student admitted successfully.\n\nParent already exists:\nEmail: ${parentAccount.email}`
+      );
+    } else {
+      alert("Student admitted successfully.");
     }
-  };
+
+    setShowModal(false);
+    setSelectedApp(null);
+    fetchData();
+  } catch (err: any) {
+    alert(err.response?.data?.message || "Failed to admit applicant");
+  } finally {
+    setSubmitting(false);
+  }
+};
 
   const getStatusColor = (status: string) => {
     switch (status) {
