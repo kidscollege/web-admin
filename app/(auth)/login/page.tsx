@@ -26,12 +26,17 @@ export default function LoginPage() {
         password,
       });
 
-      const { access_token, user } = response.data;
-setToken(access_token);
+    const { access_token, user } = response.data;
+
+// support both response shapes
+const token = access_token || response.data.accessToken || response.data.token;
+setToken(token);
 localStorage.setItem("user", JSON.stringify(user));
 
 if (user.role === "PARENT") {
   router.push("/parent");
+} else if (user.role === "TEACHER") {
+  router.push("/teacher");
 } else {
   router.push("/dashboard");
 }
