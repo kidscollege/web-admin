@@ -691,21 +691,10 @@ setTerms(termsRes.data || []);
   className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
 >
   <option value="Kindergarten">Kindergarten</option>
-  <option value="Nursery 1">Nursery 1</option>
-  <option value="Nursery 2">Nursery 2</option>
-  <option value="Primary 1">Primary 1</option>
-  <option value="Primary 2">Primary 2</option>
-  <option value="Primary 3">Primary 3</option>
-  <option value="Primary 4">Primary 4</option>
-  <option value="Primary 5">Primary 5</option>
-  <option value="Primary 6">Primary 6</option>
-  
-  <option value="Junior 1">Jss 1</option>
-  <option value="Junior 2">Jss 2</option>
-  <option value="Junior 3">Jss 3</option>
-  <option value="Senior 1">Sss 1</option>
-  <option value="Senior 2">Sss 2</option>
-  <option value="Senior 3">Sss 3</option>
+  <option value="Nursery">Nursery</option>
+  <option value="Primary">Primary</option>
+  <option value="Junior">Junior Secondary</option>
+  <option value="Senior">Senior Secondary</option>
 </select>
                 </div>
                 <div>

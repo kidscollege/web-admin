@@ -221,21 +221,23 @@ export default function ApplyPage() {
                       }
                       className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
-                      <option value="Kindergarten">Kindergarten</option>
+                      <option value="Kindergarten 1">KG 1</option>
+                      <option value="Kindergarten 2">KG 2</option>
                       <option value="Nursery 1">Nursery 1</option>
                       <option value="Nursery 2">Nursery 2</option>
+                      <option value="Nursery 3">Nursery 3</option>
                       <option value="Primary 1">Primary 1</option>
                       <option value="Primary 2">Primary 2</option>
                       <option value="Primary 3">Primary 3</option>
                       <option value="Primary 4">Primary 4</option>
                       <option value="Primary 5">Primary 5</option>
                       <option value="Primary 6">Primary 6</option>
-                      <option value="Junior 1">Jss 1</option>
-                      <option value="Junior 2">Jss 2</option>
-                      <option value="Junior 3">Jss 3</option>
-                      <option value="Senior 1">Sss 1</option>
-                      <option value="Senior 2">Sss 2</option>
-                      <option value="Senior 3">Sss 3</option>
+                      <option value="JS 1">JS 1</option>
+                      <option value="JS 2">JS 2</option>
+                      <option value="JSS 3">JS 3</option>
+                      <option value="SS 1">SS 1</option>
+                      <option value="SS 2">SS 2</option>
+                      <option value="SS 3">SS 3</option>
                     </select>
                   </div>
                 </div>
