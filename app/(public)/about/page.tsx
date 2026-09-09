@@ -72,6 +72,21 @@ export default function AboutPage() {
           </div>
         </div>
 
+        <div className="bg-[#F8F5FF] rounded-[2rem] border border-purple-100 p-8">
+          <h2 className="text-2xl font-extrabold text-[#2E1A5A] mb-5">More About Us</h2>
+          <div className="grid md:grid-cols-3 gap-4">
+            <Link href="/about/our-story" className="block bg-white rounded-2xl border border-purple-100 p-4 text-[#2E1A5A] font-semibold hover:bg-purple-50 transition">
+              Our Story
+            </Link>
+            <Link href="/about/leadership" className="block bg-white rounded-2xl border border-purple-100 p-4 text-[#2E1A5A] font-semibold hover:bg-purple-50 transition">
+              Leadership
+            </Link>
+            <Link href="/about/values" className="block bg-white rounded-2xl border border-purple-100 p-4 text-[#2E1A5A] font-semibold hover:bg-purple-50 transition">
+              Values
+            </Link>
+          </div>
+        </div>
+
         <div className="bg-[#7C3AED] text-white rounded-[2rem] p-8 text-center">
           <h2 className="text-2xl font-extrabold">Ready to join Kids College?</h2>
           <p className="text-purple-100 mt-2">
