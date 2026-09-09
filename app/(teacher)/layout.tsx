@@ -8,6 +8,7 @@ import { getToken, removeToken } from "@/lib/auth";
 const links = [
   { name: "Dashboard", href: "/teacher" },
   { name: "Attendance", href: "/teacher/attendance" },
+  { name: "Results", href: "/teacher/results" },
 ];
 
 export default function TeacherLayout({
