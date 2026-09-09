@@ -7,10 +7,12 @@ import { getToken, removeToken } from "@/lib/auth";
 
 export default function TeacherAttendancePage() {
   const router = useRouter();
+
   const [assignments, setAssignments] = useState<any[]>([]);
   const [terms, setTerms] = useState<any[]>([]);
-  const [students, setStudents] = useState<any[]>([]);
+  const [rows, setRows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingStudents, setLoadingStudents] = useState(false);
   const [saving, setSaving] = useState(false);
 
   const [selectedAssignment, setSelectedAssignment] = useState("");
@@ -25,16 +27,12 @@ export default function TeacherAttendancePage() {
       return;
     }
 
-    Promise.all([
-      api.get("/teacher/assignments"),
-      api.get('/teacher/terms'), // if protected for teachers, we’ll adjust
-    ])
+    Promise.all([api.get("/teacher/assignments"), api.get("/teacher/terms")])
       .then(([a, t]) => {
         setAssignments(a.data || []);
         setTerms(t.data || []);
       })
       .catch((err) => {
-        // fallback if terms endpoint is admin-only
         if (err.response?.status === 401) {
           removeToken();
           router.push("/login");
@@ -43,33 +41,62 @@ export default function TeacherAttendancePage() {
       .finally(() => setLoading(false));
   }, [router]);
 
-  const loadStudents = async (assignmentId: string) => {
-    setSelectedAssignment(assignmentId);
-    setStudents([]);
-    setRecords({});
+  const getAssignment = (id: string) => assignments.find((a) => a.id === id);
 
-    const item = assignments.find((a) => a.id === assignmentId);
-    if (!item) return;
+  const loadAttendance = async (assignmentId = selectedAssignment, selectedDate = date) => {
+    const item = getAssignment(assignmentId);
+    if (!item) {
+      setRows([]);
+      setRecords({});
+      return;
+    }
 
+    const classId = item.classId || item.class?.id;
+    const sectionId = item.sectionId || item.section?.id;
+
+    if (!classId || !selectedDate) return;
+
+    setLoadingStudents(true);
     try {
-      const res = await api.get(`/teacher/classes/${item.classId}/students`, {
-        params: item.sectionId ? { sectionId: item.sectionId } : undefined,
+      const res = await api.get("/teacher/attendance", {
+        params: {
+          classId,
+          date: selectedDate,
+          ...(sectionId ? { sectionId } : {}),
+        },
       });
-      const list = res.data || [];
-      setStudents(list);
 
-      const initial: Record<string, string> = {};
-      list.forEach((s: any) => {
-        initial[s.id] = "PRESENT";
+      const list = res.data || [];
+      setRows(list);
+
+      const mapped: Record<string, string> = {};
+      list.forEach((r: any) => {
+        mapped[r.studentId] = r.status || "PRESENT";
       });
-      setRecords(initial);
+      setRecords(mapped);
     } catch (err: any) {
-      alert(err.response?.data?.message || "Failed to load students");
+      alert(err.response?.data?.message || "Failed to load attendance");
+      setRows([]);
+      setRecords({});
+    } finally {
+      setLoadingStudents(false);
+    }
+  };
+
+  const handleAssignmentChange = async (assignmentId: string) => {
+    setSelectedAssignment(assignmentId);
+    await loadAttendance(assignmentId, date);
+  };
+
+  const handleDateChange = async (value: string) => {
+    setDate(value);
+    if (selectedAssignment) {
+      await loadAttendance(selectedAssignment, value);
     }
   };
 
   const handleSave = async () => {
-    const item = assignments.find((a) => a.id === selectedAssignment);
+    const item = getAssignment(selectedAssignment);
     if (!item) {
       alert("Select a class assignment");
       return;
@@ -82,20 +109,25 @@ export default function TeacherAttendancePage() {
       alert("Select a date");
       return;
     }
+    if (!rows.length) {
+      alert("No students to save");
+      return;
+    }
 
     setSaving(true);
     try {
       await api.post("/teacher/attendance", {
-        classId: item.classId,
-        sectionId: item.sectionId || undefined,
+        classId: item.classId || item.class?.id,
+        sectionId: item.sectionId || item.section?.id || undefined,
         termId,
         date,
-        records: students.map((s) => ({
-          studentId: s.id,
-          status: records[s.id] || "PRESENT",
+        records: rows.map((r) => ({
+          studentId: r.studentId,
+          status: records[r.studentId] || "PRESENT",
         })),
       });
       alert("Attendance saved successfully");
+      await loadAttendance(selectedAssignment, date);
     } catch (err: any) {
       alert(err.response?.data?.message || "Failed to save attendance");
     } finally {
@@ -116,7 +148,7 @@ export default function TeacherAttendancePage() {
       <div>
         <h1 className="text-2xl font-extrabold text-[#2E1A5A]">Mark Attendance</h1>
         <p className="text-sm text-slate-500 mt-1">
-          Select your class, term, and date
+          Select class, term, and date. Existing records can be edited and saved again.
         </p>
       </div>
 
@@ -125,18 +157,18 @@ export default function TeacherAttendancePage() {
           <label className="block text-sm font-medium mb-1">Class / Subject</label>
           <select
             value={selectedAssignment}
-            onChange={(e) => loadStudents(e.target.value)}
+            onChange={(e) => handleAssignmentChange(e.target.value)}
             className="w-full border border-purple-200 rounded-xl px-3 py-2.5 text-sm"
           >
             <option value="">Select assignment</option>
             {assignments.map((a) => (
               <option key={a.id} value={a.id}>
-                {(a.class?.name || a.className || "Class") +
-                  (a.section?.name || a.sectionName
-                    ? ` ${a.section?.name || a.sectionName}`
+                {(a.className || a.class?.name || "Class") +
+                  (a.sectionName || a.section?.name
+                    ? ` ${a.sectionName || a.section?.name}`
                     : "") +
                   " - " +
-                  (a.subject?.name || a.subjectName || "Subject")}
+                  (a.subjectName || a.subject?.name || "Subject")}
               </option>
             ))}
           </select>
@@ -163,7 +195,7 @@ export default function TeacherAttendancePage() {
           <input
             type="date"
             value={date}
-            onChange={(e) => setDate(e.target.value)}
+            onChange={(e) => handleDateChange(e.target.value)}
             className="w-full border border-purple-200 rounded-xl px-3 py-2.5 text-sm"
           />
         </div>
@@ -172,26 +204,34 @@ export default function TeacherAttendancePage() {
       <div className="bg-white rounded-2xl border border-purple-100 p-5 shadow-sm">
         {!selectedAssignment ? (
           <p className="text-slate-500 text-sm">Select a class to load students.</p>
-        ) : students.length === 0 ? (
+        ) : loadingStudents ? (
+          <p className="text-slate-500 text-sm">Loading attendance...</p>
+        ) : rows.length === 0 ? (
           <p className="text-slate-500 text-sm">No students found in this class.</p>
         ) : (
           <div className="space-y-3">
-            {students.map((s) => (
+            {rows.map((s) => (
               <div
-                key={s.id}
+                key={s.studentId}
                 className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-purple-50 py-3"
               >
                 <div>
                   <p className="font-medium text-[#2E1A5A]">
                     {s.firstName} {s.lastName}
                   </p>
-                  <p className="text-xs text-slate-500">{s.admissionNumber}</p>
+                  <p className="text-xs text-slate-500">
+                    {s.admissionNumber}
+                    {s.status ? " · previously marked" : " · not marked yet"}
+                  </p>
                 </div>
 
                 <select
-                  value={records[s.id] || "PRESENT"}
+                  value={records[s.studentId] || "PRESENT"}
                   onChange={(e) =>
-                    setRecords((prev) => ({ ...prev, [s.id]: e.target.value }))
+                    setRecords((prev) => ({
+                      ...prev,
+                      [s.studentId]: e.target.value,
+                    }))
                   }
                   className="border border-purple-200 rounded-lg px-3 py-2 text-sm"
                 >
