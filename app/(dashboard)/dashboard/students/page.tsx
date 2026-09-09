@@ -14,6 +14,7 @@ interface Student {
   gender?: string;
   dateOfBirth?: string;
   status: string;
+  currentClassId?: string | null;
   currentClass?: { name: string } | null;
   createdAt: string;
 }
@@ -27,17 +28,20 @@ export default function StudentsPage() {
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
+  const [classes, setClasses] = useState<any[]>([]);
+
   const [form, setForm] = useState({
     firstName: "",
-    lastName: "",
-    middleName: "",
-    gender: "Male",
-    dateOfBirth: "",
-    parentFirstName: "",
-    parentLastName: "",
-    parentPhone: "",
-    parentEmail: "",
-    relationship: "Father",
+  lastName: "",
+  middleName: "",
+  gender: "Male",
+  dateOfBirth: "",
+  currentClassId: "",
+  parentFirstName: "",
+  parentLastName: "",
+  parentPhone: "",
+  parentEmail: "",
+  relationship: "Father",
   });
 
   const fetchStudents = async () => {
@@ -57,13 +61,24 @@ export default function StudentsPage() {
   };
 
   useEffect(() => {
-    const token = getToken();
-    if (!token) {
-      router.push("/login");
-      return;
+  const token = getToken();
+  if (!token) {
+    router.push("/login");
+    return;
+  }
+
+  const load = async () => {
+    try {
+      const classesRes = await api.get("/academics/classes");
+      setClasses(classesRes.data || []);
+    } catch (err) {
+      // ignore class load error for now
     }
     fetchStudents();
-  }, []);
+  };
+
+  load();
+}, []);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,69 +87,72 @@ export default function StudentsPage() {
   };
 
   const openCreateModal = () => {
-    setEditingStudent(null);
-    setForm({
-      firstName: "",
-      lastName: "",
-      middleName: "",
-      gender: "Male",
-      dateOfBirth: "",
-      parentFirstName: "",
-      parentLastName: "",
-      parentPhone: "",
-      parentEmail: "",
-      relationship: "Father",
-    });
-    setShowModal(true);
-  };
+  setEditingStudent(null);
+  setForm({
+    firstName: "",
+    lastName: "",
+    middleName: "",
+    gender: "Male",
+    dateOfBirth: "",
+    currentClassId: "",
+    parentFirstName: "",
+    parentLastName: "",
+    parentPhone: "",
+    parentEmail: "",
+    relationship: "Father",
+  });
+  setShowModal(true);
+};
 
-  const openEditModal = (student: Student) => {
-    setEditingStudent(student);
-    setForm({
-      firstName: student.firstName || "",
-      lastName: student.lastName || "",
-      middleName: student.middleName || "",
-      gender: student.gender || "Male",
-      dateOfBirth: student.dateOfBirth
-        ? student.dateOfBirth.split("T")[0]
-        : "",
-      parentFirstName: "",
-      parentLastName: "",
-      parentPhone: "",
-      parentEmail: "",
-      relationship: "Father",
-    });
-    setShowModal(true);
-  };
-
+const openEditModal = (student: Student) => {
+  setEditingStudent(student);
+  setForm({
+    firstName: student.firstName || "",
+    lastName: student.lastName || "",
+    middleName: student.middleName || "",
+    gender: student.gender || "Male",
+    dateOfBirth: student.dateOfBirth
+      ? student.dateOfBirth.split("T")[0]
+      : "",
+    currentClassId: student.currentClassId || "",
+    parentFirstName: "",
+    parentLastName: "",
+    parentPhone: "",
+    parentEmail: "",
+    relationship: "Father",
+  });
+  setShowModal(true);
+};
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSubmitting(true);
+  e.preventDefault();
+  setSubmitting(true);
 
-    try {
-      if (editingStudent) {
-        // Update
-        await api.patch(`/students/${editingStudent.id}`, {
-          firstName: form.firstName,
-          lastName: form.lastName,
-          middleName: form.middleName || undefined,
-          gender: form.gender,
-          dateOfBirth: form.dateOfBirth || undefined,
-        });
-      } else {
-        // Create
-        await api.post("/students", form);
-      }
-
-      setShowModal(false);
-      setEditingStudent(null);
-      fetchStudents();
-    } catch (err: any) {
-      alert(err.response?.data?.message || "Failed to save student");
-    } finally {
-      setSubmitting(false);
+  try {
+    if (editingStudent) {
+      await api.patch(`/students/${editingStudent.id}`, {
+        firstName: form.firstName,
+        lastName: form.lastName,
+        middleName: form.middleName || undefined,
+        gender: form.gender,
+        dateOfBirth: form.dateOfBirth || undefined,
+        currentClassId: form.currentClassId || null,
+      });
+    } else {
+      await api.post("/students", {
+        ...form,
+        currentClassId: form.currentClassId || undefined,
+      });
     }
-  };
+
+    setShowModal(false);
+    setEditingStudent(null);
+    fetchStudents();
+  } catch (err: any) {
+    alert(err.response?.data?.message || "Failed to save student");
+  } finally {
+    setSubmitting(false);
+  }
+};
 
   const handleDelete = async (student: Student) => {
     if (
@@ -391,6 +409,28 @@ export default function StudentsPage() {
                   className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
+
+
+              <div>
+  <label className="block text-sm font-medium mb-1">Class</label>
+  <select
+    value={form.currentClassId || ""}
+    onChange={(e) =>
+      setForm({
+        ...form,
+        currentClassId: e.target.value,
+      })
+    }
+    className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+  >
+    <option value="">Unassigned</option>
+    {classes.map((cls: any) => (
+      <option key={cls.id} value={cls.id}>
+        {cls.name}
+      </option>
+    ))}
+  </select>
+</div>
 
               {/* Parent fields only when creating */}
               {!editingStudent && (
