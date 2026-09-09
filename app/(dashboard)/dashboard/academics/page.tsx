@@ -7,7 +7,9 @@ import { getToken, removeToken } from "@/lib/auth";
 
 export default function AcademicsPage() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<"sessions" | "classes" | "subjects">("sessions");
+  const [activeTab, setActiveTab] = useState<
+  "sessions" | "terms" | "classes" | "subjects"
+>("sessions");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
@@ -38,6 +40,16 @@ export default function AcademicsPage() {
     capacity: 40,
   });
 
+  const [terms, setTerms] = useState<any[]>([]);
+const [termForm, setTermForm] = useState({
+  sessionId: "",
+  name: "First Term",
+  startDate: "",
+  endDate: "",
+  isCurrent: true,
+});
+const [savingTerm, setSavingTerm] = useState(false);
+
   const [subjectForm, setSubjectForm] = useState({
     name: "",
     code: "",
@@ -51,6 +63,10 @@ export default function AcademicsPage() {
         api.get("/academics/classes"),
         api.get("/academics/subjects"),
       ]);
+
+const termsRes = await api.get("/academics/terms");
+setTerms(termsRes.data || []);
+
       setSessions(sessionsRes.data || []);
       setClasses(classesRes.data || []);
       setSubjects(subjectsRes.data || []);
@@ -72,6 +88,41 @@ export default function AcademicsPage() {
     }
     fetchData();
   }, []);
+
+
+  const handleCreateTerm = async (e: React.FormEvent) => {
+  e.preventDefault();
+  if (!termForm.sessionId || !termForm.name || !termForm.startDate || !termForm.endDate) {
+    alert("Please fill session, name, start date and end date");
+    return;
+  }
+
+  setSavingTerm(true);
+  try {
+    await api.post("/academics/terms", {
+      sessionId: termForm.sessionId,
+      name: termForm.name,
+      startDate: termForm.startDate,
+      endDate: termForm.endDate,
+      isCurrent: termForm.isCurrent,
+    });
+    alert("Term created");
+    setTermForm({
+      sessionId: "",
+      name: "First Term",
+      startDate: "",
+      endDate: "",
+      isCurrent: true,
+    });
+    // reload terms
+    const termsRes = await api.get("/academics/terms");
+    setTerms(termsRes.data || []);
+  } catch (err: any) {
+    alert(err.response?.data?.message || "Failed to create term");
+  } finally {
+    setSavingTerm(false);
+  }
+};
 
   // ===== SESSION HANDLERS =====
   const openSessionModal = (session?: any) => {
@@ -166,6 +217,8 @@ export default function AcademicsPage() {
     }
   };
 
+  
+
   // ===== SUBJECT HANDLERS =====
   const openSubjectModal = (subject?: any) => {
     if (subject) {
@@ -212,10 +265,11 @@ export default function AcademicsPage() {
   };
 
   const tabs = [
-    { key: "sessions", label: "Sessions" },
-    { key: "classes", label: "Classes" },
-    { key: "subjects", label: "Subjects" },
-  ] as const;
+  { key: "sessions", label: "Sessions" },
+  { key: "terms", label: "Terms" },
+  { key: "classes", label: "Classes" },
+  { key: "subjects", label: "Subjects" },
+] as const;
 
   return (
     <div>
@@ -298,6 +352,118 @@ export default function AcademicsPage() {
               </div>
             </div>
           )}
+
+{/* TERMS */}
+{activeTab === "terms" && (
+  <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+    <h3 className="text-lg font-semibold text-gray-800 mb-4">Terms</h3>
+
+    <form
+      onSubmit={handleCreateTerm}
+      className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3 mb-5"
+    >
+      <div>
+        <label className="block text-sm font-medium mb-1">Session</label>
+        <select
+          value={termForm.sessionId}
+          onChange={(e) =>
+            setTermForm({ ...termForm, sessionId: e.target.value })
+          }
+          className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm"
+        >
+          <option value="">Select session</option>
+          {sessions.map((s: any) => (
+            <option key={s.id} value={s.id}>
+              {s.name}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium mb-1">Term Name</label>
+        <select
+          value={termForm.name}
+          onChange={(e) =>
+            setTermForm({ ...termForm, name: e.target.value })
+          }
+          className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm"
+        >
+          <option>First Term</option>
+          <option>Second Term</option>
+          <option>Third Term</option>
+        </select>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium mb-1">Start Date</label>
+        <input
+          type="date"
+          value={termForm.startDate}
+          onChange={(e) =>
+            setTermForm({ ...termForm, startDate: e.target.value })
+          }
+          className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium mb-1">End Date</label>
+        <input
+          type="date"
+          value={termForm.endDate}
+          onChange={(e) =>
+            setTermForm({ ...termForm, endDate: e.target.value })
+          }
+          className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm"
+        />
+      </div>
+
+      <div className="flex items-end">
+        <button
+          type="submit"
+          disabled={savingTerm}
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-lg text-sm font-medium disabled:opacity-50"
+        >
+          {savingTerm ? "Saving..." : "Add Term"}
+        </button>
+      </div>
+    </form>
+
+    {terms.length === 0 ? (
+      <p className="text-sm text-gray-500">No terms created yet.</p>
+    ) : (
+      <div className="space-y-2">
+        {terms.map((term: any) => (
+          <div
+            key={term.id}
+            className="flex flex-col sm:flex-row sm:items-center sm:justify-between border border-gray-100 rounded-lg px-3 py-2 text-sm"
+          >
+            <div>
+              <p className="font-medium text-gray-800">{term.name}</p>
+              <p className="text-gray-500">
+                {term.session?.name || "Session"} ·{" "}
+                {term.startDate
+                  ? new Date(term.startDate).toLocaleDateString()
+                  : "—"}{" "}
+                -{" "}
+                {term.endDate
+                  ? new Date(term.endDate).toLocaleDateString()
+                  : "—"}
+              </p>
+            </div>
+            {term.isCurrent && (
+              <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full mt-2 sm:mt-0">
+                Current
+              </span>
+            )}
+          </div>
+        ))}
+      </div>
+    )}
+  </div>
+)}
+
 
           {/* CLASSES */}
           {activeTab === "classes" && (
