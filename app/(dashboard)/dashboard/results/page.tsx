@@ -21,6 +21,7 @@ export default function ResultsPage() {
   const [selectedAssessment, setSelectedAssessment] = useState<any | null>(null);
   const [assessmentScores, setAssessmentScores] = useState<any[]>([]);
   const [loadingScores, setLoadingScores] = useState(false);
+  const [editingAssessment, setEditingAssessment] = useState<any | null>(null);
 
   const [assessmentForm, setAssessmentForm] = useState({
     termId: "",
@@ -78,16 +79,51 @@ export default function ResultsPage() {
     fetchData();
   }, []);
 
+  const openAssessmentModal = (assessment?: any) => {
+    if (assessment) {
+      setEditingAssessment(assessment);
+      setAssessmentForm({
+        termId: assessment.termId || "",
+        subjectId: assessment.subjectId || "",
+        name: assessment.name || "CA1",
+        maxScore: assessment.maxScore || 20,
+        weight: assessment.weight || 20,
+        assessmentDate: assessment.assessmentDate
+          ? assessment.assessmentDate.split("T")[0]
+          : "",
+      });
+    } else {
+      setEditingAssessment(null);
+      setAssessmentForm({
+        termId: "",
+        subjectId: "",
+        name: "CA1",
+        maxScore: 20,
+        weight: 20,
+        assessmentDate: "",
+      });
+    }
+    setShowAssessmentModal(true);
+  };
+
   const handleCreateAssessment = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
     try {
-      await api.post("/results/assessments", {
+      const payload = {
         ...assessmentForm,
         maxScore: Number(assessmentForm.maxScore),
         weight: Number(assessmentForm.weight),
-      });
+      };
+
+      if (editingAssessment) {
+        await api.patch(`/results/assessments/${editingAssessment.id}`, payload);
+      } else {
+        await api.post("/results/assessments", payload);
+      }
+
       setShowAssessmentModal(false);
+      setEditingAssessment(null);
       setAssessmentForm({
         termId: "",
         subjectId: "",
@@ -98,9 +134,29 @@ export default function ResultsPage() {
       });
       fetchData();
     } catch (err: any) {
-      alert(err.response?.data?.message || "Failed to create assessment");
+      alert(
+        err.response?.data?.message ||
+          (editingAssessment ? "Failed to update assessment" : "Failed to create assessment")
+      );
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleDeleteAssessment = async (assessment: any) => {
+    if (!confirm(`Delete assessment "${assessment.name}"? This will also remove its recorded scores.`)) {
+      return;
+    }
+
+    try {
+      await api.delete(`/results/assessments/${assessment.id}`);
+      if (selectedAssessment?.id === assessment.id) {
+        setSelectedAssessment(null);
+        setAssessmentScores([]);
+      }
+      fetchData();
+    } catch (err: any) {
+      alert(err.response?.data?.message || "Failed to delete assessment");
     }
   };
 
@@ -226,7 +282,7 @@ export default function ResultsPage() {
             <div>
               <div className="flex justify-end mb-4">
                 <button
-                  onClick={() => setShowAssessmentModal(true)}
+                  onClick={() => openAssessmentModal()}
                   className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium"
                 >
                   + Create Assessment
@@ -271,10 +327,25 @@ export default function ResultsPage() {
                           View Scores
                         </button>
                         <button
+                          onClick={() => openAssessmentModal(item)}
+                          className="flex-1 border border-amber-300 text-amber-700 py-2 rounded-lg text-sm font-medium hover:bg-amber-50"
+                        >
+                          Edit
+                        </button>
+                      </div>
+
+                      <div className="mt-2 flex gap-2">
+                        <button
                           onClick={() => openScoreModal(item)}
                           className="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-blue-700"
                         >
                           Add Score
+                        </button>
+                        <button
+                          onClick={() => handleDeleteAssessment(item)}
+                          className="flex-1 border border-red-300 text-red-700 py-2 rounded-lg text-sm font-medium hover:bg-red-50"
+                        >
+                          Delete
                         </button>
                       </div>
                     </div>
@@ -303,12 +374,20 @@ export default function ResultsPage() {
                     {selectedAssessment.maxScore}
                   </p>
                 </div>
-                <button
-                  onClick={() => openScoreModal(selectedAssessment)}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium w-full sm:w-auto"
-                >
-                  + Add / Edit Score
-                </button>
+                <div className="flex gap-2 w-full sm:w-auto">
+                  <button
+                    onClick={() => openAssessmentModal(selectedAssessment)}
+                    className="border border-amber-300 text-amber-700 px-3 py-2 rounded-lg text-sm font-medium"
+                  >
+                    Edit Assessment
+                  </button>
+                  <button
+                    onClick={() => openScoreModal(selectedAssessment)}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium"
+                  >
+                    + Add / Edit Score
+                  </button>
+                </div>
               </div>
 
               {loadingScores ? (
@@ -508,9 +587,14 @@ export default function ResultsPage() {
         <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
           <div className="bg-white rounded-t-2xl sm:rounded-xl w-full sm:max-w-md max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between px-5 py-4 border-b">
-              <h3 className="text-lg font-semibold">Create Assessment</h3>
+              <h3 className="text-lg font-semibold">
+                {editingAssessment ? "Edit Assessment" : "Create Assessment"}
+              </h3>
               <button
-                onClick={() => setShowAssessmentModal(false)}
+                onClick={() => {
+                  setShowAssessmentModal(false);
+                  setEditingAssessment(null);
+                }}
                 className="text-gray-400 text-xl"
               >
                 ✕
@@ -632,7 +716,7 @@ export default function ResultsPage() {
                   disabled={submitting}
                   className="flex-1 bg-blue-600 text-white py-2.5 rounded-lg text-sm disabled:opacity-50"
                 >
-                  {submitting ? "Saving..." : "Create"}
+                  {submitting ? "Saving..." : editingAssessment ? "Update" : "Create"}
                 </button>
               </div>
             </form>
