@@ -72,7 +72,7 @@ if (user.role === "PARENT") {
               />
               <div>
                 <p className="font-bold text-[#2E1A5A]">Kids College</p>
-                <p className="text-xs text-slate-500">Staff Portal</p>
+                <p className="text-xs text-slate-500">Portal</p>
               </div>
             </div>
 

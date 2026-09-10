@@ -79,7 +79,7 @@ export default function PublicLayout({
               href="/login"
               className="border border-purple-200 text-[#4B2E83] px-4 py-2 rounded-full hover:bg-purple-50 transition"
             >
-              Staff Login
+              Sign In
             </Link>
           </nav>
 
@@ -122,7 +122,7 @@ export default function PublicLayout({
                 onClick={() => setOpen(false)}
                 className="block text-center border border-purple-200 text-[#4B2E83] px-3 py-2.5 rounded-full text-sm font-medium"
               >
-                Staff Login
+                Sign In
               </Link>
             </div>
           </div>

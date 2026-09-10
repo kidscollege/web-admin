@@ -143,7 +143,7 @@ export default function DashboardLayout({
             {(sidebarOpen || isDesktop) && (
               <div className="min-w-0 leading-tight">
                 <p className="truncate text-sm font-bold text-[#17233C]">Kids College</p>
-                <p className="truncate text-[10px] font-medium uppercase tracking-[0.14em] text-[#9A6B18]">Staff portal</p>
+                <p className="truncate text-[10px] font-medium uppercase tracking-[0.14em] text-[#9A6B18]">Portal</p>
               </div>
             )}
           </Link>
