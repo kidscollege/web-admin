@@ -7,8 +7,8 @@ import { getToken, removeToken } from "@/lib/auth";
 
 export default function AcademicsPage() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<
-  "sessions" | "terms" | "classes" | "subjects"
+const [activeTab, setActiveTab] = useState<
+  "sessions" | "terms" | "classes" | "subjects" | "assignments"
 >("sessions");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -32,6 +32,15 @@ export default function AcademicsPage() {
     endDate: "",
     isCurrent: false,
   });
+
+  const [staffList, setStaffList] = useState<any[]>([]);
+const [classSubjects, setClassSubjects] = useState<any[]>([]);
+const [assignForm, setAssignForm] = useState({
+  classId: "",
+  subjectId: "",
+  teacherId: "",
+});
+const [savingAssign, setSavingAssign] = useState(false);
 
   const [classForm, setClassForm] = useState({
     sessionId: "",
@@ -58,18 +67,21 @@ const [savingTerm, setSavingTerm] = useState(false);
 
   const fetchData = async () => {
     try {
-      const [sessionsRes, classesRes, subjectsRes] = await Promise.all([
+      const [sessionsRes, classesRes, subjectsRes, termsRes, staffRes, assignRes] = await Promise.all([
         api.get("/academics/sessions"),
-        api.get("/academics/classes"),
-        api.get("/academics/subjects"),
+    api.get("/academics/classes"),
+    api.get("/academics/subjects"),
+    api.get("/academics/terms"),
+    api.get("/staff"),
+    api.get("/academics/class-subjects"),
       ]);
 
-const termsRes = await api.get("/academics/terms");
-setTerms(termsRes.data || []);
-
       setSessions(sessionsRes.data || []);
-      setClasses(classesRes.data || []);
-      setSubjects(subjectsRes.data || []);
+setClasses(classesRes.data || []);
+setSubjects(subjectsRes.data || []);
+setTerms(termsRes.data || []);
+setStaffList(staffRes.data?.data || staffRes.data || []);
+setClassSubjects(assignRes.data || []);
     } catch (err: any) {
       if (err.response?.status === 401) {
         removeToken();
@@ -121,6 +133,27 @@ setTerms(termsRes.data || []);
     alert(err.response?.data?.message || "Failed to create term");
   } finally {
     setSavingTerm(false);
+  }
+};
+
+const handleAssignTeacher = async (e: React.FormEvent) => {
+  e.preventDefault();
+  if (!assignForm.classId || !assignForm.subjectId || !assignForm.teacherId) {
+    alert("Select class, subject and teacher");
+    return;
+  }
+
+  setSavingAssign(true);
+  try {
+    await api.post("/academics/class-subjects", assignForm);
+    alert("Teacher assigned successfully");
+    setAssignForm({ classId: "", subjectId: "", teacherId: "" });
+    const res = await api.get("/academics/class-subjects");
+    setClassSubjects(res.data || []);
+  } catch (err: any) {
+    alert(err.response?.data?.message || "Failed to assign teacher");
+  } finally {
+    setSavingAssign(false);
   }
 };
 
@@ -269,6 +302,7 @@ setTerms(termsRes.data || []);
   { key: "terms", label: "Terms" },
   { key: "classes", label: "Classes" },
   { key: "subjects", label: "Subjects" },
+  { key: "assignments", label: "Assignments" },
 ] as const;
 
   return (
@@ -562,6 +596,109 @@ setTerms(termsRes.data || []);
               </div>
             </div>
           )}
+
+          {activeTab === "assignments" && (
+  <div className="space-y-6">
+    <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+      <h3 className="text-lg font-semibold text-gray-800 mb-4">
+        Assign Teacher to Class / Subject
+      </h3>
+
+      <form
+        onSubmit={handleAssignTeacher}
+        className="grid grid-cols-1 md:grid-cols-4 gap-3"
+      >
+        <select
+          value={assignForm.classId}
+          onChange={(e) =>
+            setAssignForm({ ...assignForm, classId: e.target.value })
+          }
+          className="border border-gray-300 rounded-lg px-3 py-2.5 text-sm"
+        >
+          <option value="">Select class</option>
+          {classes.map((c: any) => (
+            <option key={c.id} value={c.id}>
+              {c.name}
+            </option>
+          ))}
+        </select>
+
+        <select
+          value={assignForm.subjectId}
+          onChange={(e) =>
+            setAssignForm({ ...assignForm, subjectId: e.target.value })
+          }
+          className="border border-gray-300 rounded-lg px-3 py-2.5 text-sm"
+        >
+          <option value="">Select subject</option>
+          {subjects.map((s: any) => (
+            <option key={s.id} value={s.id}>
+              {s.name}
+            </option>
+          ))}
+        </select>
+
+        <select
+          value={assignForm.teacherId}
+          onChange={(e) =>
+            setAssignForm({ ...assignForm, teacherId: e.target.value })
+          }
+          className="border border-gray-300 rounded-lg px-3 py-2.5 text-sm"
+        >
+          <option value="">Select teacher</option>
+          {staffList.map((t: any) => (
+            <option key={t.id} value={t.id}>
+              {t.firstName} {t.lastName}
+              {t.designation ? ` (${t.designation})` : ""}
+            </option>
+          ))}
+        </select>
+
+        <button
+          type="submit"
+          disabled={savingAssign}
+          className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium disabled:opacity-50"
+        >
+          {savingAssign ? "Saving..." : "Assign Teacher"}
+        </button>
+      </form>
+    </div>
+
+    <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+      <h3 className="text-lg font-semibold text-gray-800 mb-4">
+        Current Assignments
+      </h3>
+
+      {classSubjects.length === 0 ? (
+        <p className="text-sm text-gray-500">No assignments yet.</p>
+      ) : (
+        <div className="space-y-2">
+          {classSubjects.map((item: any) => (
+            <div
+              key={item.id}
+              className="border border-gray-100 rounded-lg px-3 py-2 text-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1"
+            >
+              <div>
+                <p className="font-medium text-gray-800">
+                  {item.class?.name || "Class"} — {item.subject?.name || "Subject"}
+                </p>
+                <p className="text-gray-500">
+                  Teacher:{" "}
+                  {item.teacher
+                    ? `${item.teacher.firstName} ${item.teacher.lastName}`
+                    : "Unassigned"}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  </div>
+)}
+
+
+
         </>
       )}
 
