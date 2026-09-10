@@ -14,17 +14,19 @@ export default function StaffPage() {
   const [editingStaff, setEditingStaff] = useState<any | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  const [form, setForm] = useState({
-    firstName: "",
-    lastName: "",
-    middleName: "",
-    gender: "Male",
-    phone: "",
-    email: "",
-    designation: "Teacher",
-    employmentDate: "",
-    address: "",
-  });
+ const [form, setForm] = useState({
+  firstName: "",
+  lastName: "",
+  middleName: "",
+  gender: "Male",
+  phone: "",
+  email: "",
+  designation: "Teacher",
+  employmentDate: "",
+  address: "",
+  createLogin: true,
+  role: "TEACHER",
+});
 
   const fetchStaff = async () => {
     try {
@@ -60,15 +62,17 @@ export default function StaffPage() {
   const openCreateModal = () => {
     setEditingStaff(null);
     setForm({
-      firstName: "",
-      lastName: "",
-      middleName: "",
-      gender: "Male",
-      phone: "",
-      email: "",
-      designation: "Teacher",
-      employmentDate: "",
-      address: "",
+     firstName: "",
+  lastName: "",
+  middleName: "",
+  gender: "Male",
+  phone: "",
+  email: "",
+  designation: "Teacher",
+  employmentDate: "",
+  address: "",
+  createLogin: true,
+  role: "TEACHER",
     });
     setShowModal(true);
   };
@@ -87,32 +91,64 @@ export default function StaffPage() {
         ? staff.employmentDate.split("T")[0]
         : "",
       address: staff.address || "",
+      createLogin: false,
+      role: staff.role || "TEACHER",
     });
     setShowModal(true);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSubmitting(true);
+  e.preventDefault();
+  setSubmitting(true);
 
-    try {
-      if (editingStaff) {
-        // Update
-        await api.patch(`/hr/staff/${editingStaff.id}`, form);
+  try {
+    if (editingStaff) {
+      await api.patch(`/hr/staff/${editingStaff.id}`, {
+        firstName: form.firstName,
+        lastName: form.lastName,
+        middleName: form.middleName || undefined,
+        gender: form.gender,
+        phone: form.phone || undefined,
+        email: form.email || undefined,
+        designation: form.designation,
+        employmentDate: form.employmentDate || undefined,
+        address: form.address || undefined,
+      });
+      alert("Staff updated successfully");
+    } else {
+      const res = await api.post("/hr/staff", {
+        firstName: form.firstName,
+        lastName: form.lastName,
+        middleName: form.middleName || undefined,
+        gender: form.gender,
+        phone: form.phone || undefined,
+        email: form.email || undefined,
+        designation: form.designation,
+        employmentDate: form.employmentDate || undefined,
+        address: form.address || undefined,
+        createLogin: form.createLogin,
+        role: form.role,
+      });
+
+      const login = res.data?.login;
+      if (login?.temporaryPassword) {
+        alert(
+          `Staff created successfully.\n\nLogin Email: ${login.email}\nTemporary Password: ${login.temporaryPassword}\n\nCopy and share this password now.`
+        );
       } else {
-        // Create
-        await api.post("/hr/staff", form);
+        alert("Staff created successfully");
       }
-
-      setShowModal(false);
-      setEditingStaff(null);
-      fetchStaff();
-    } catch (err: any) {
-      alert(err.response?.data?.message || "Failed to save staff");
-    } finally {
-      setSubmitting(false);
     }
-  };
+
+    setShowModal(false);
+    setEditingStaff(null);
+    fetchStaff();
+  } catch (err: any) {
+    alert(err.response?.data?.message || "Failed to save staff");
+  } finally {
+    setSubmitting(false);
+  }
+};
 
   const handleDelete = async (staff: any) => {
     if (
@@ -428,6 +464,44 @@ export default function StaffPage() {
                   className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
+
+{!editingStaff && (
+  <>
+    <label className="flex items-center gap-2 text-sm">
+      <input
+        type="checkbox"
+        checked={form.createLogin}
+        onChange={(e) =>
+          setForm({ ...form, createLogin: e.target.checked })
+        }
+      />
+      Create login account
+    </label>
+
+    {form.createLogin && (
+      <div>
+        <label className="block text-sm font-medium mb-1">Login Role</label>
+        <select
+          value={form.role}
+          onChange={(e) => setForm({ ...form, role: e.target.value })}
+          className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="TEACHER">Teacher</option>
+          <option value="BURSAR">Bursar</option>
+          <option value="PRINCIPAL">Principal</option>
+          <option value="HR_ADMIN">HR Admin</option>
+          <option value="MANAGEMENT">Management</option>
+        </select>
+        <p className="text-xs text-gray-500 mt-1">
+          Email is required when creating login.
+        </p>
+      </div>
+    )}
+  </>
+)}
+
+
+
 
               <div className="flex flex-col sm:flex-row gap-3 pt-4">
                 <button
