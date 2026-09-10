@@ -66,31 +66,47 @@ const [savingTerm, setSavingTerm] = useState(false);
   });
 
   const fetchData = async () => {
-    try {
-      const [sessionsRes, classesRes, subjectsRes, termsRes, staffRes, assignRes] = await Promise.all([
-        api.get("/academics/sessions"),
-    api.get("/academics/classes"),
-    api.get("/academics/subjects"),
-    api.get("/academics/terms"),
-    api.get("/staff"),
-    api.get("/academics/class-subjects"),
-      ]);
+  try {
+    const [
+      sessionsRes,
+      classesRes,
+      subjectsRes,
+      termsRes,
+      assignRes,
+    ] = await Promise.all([
+      api.get("/academics/sessions"),
+      api.get("/academics/classes"),
+      api.get("/academics/subjects"),
+      api.get("/academics/terms"),
+      api.get("/academics/class-subjects"),
+    ]);
 
-      setSessions(sessionsRes.data || []);
-setClasses(classesRes.data || []);
-setSubjects(subjectsRes.data || []);
-setTerms(termsRes.data || []);
-setStaffList(staffRes.data?.data || staffRes.data || []);
-setClassSubjects(assignRes.data || []);
-    } catch (err: any) {
-      if (err.response?.status === 401) {
-        removeToken();
-        router.push("/login");
-      }
-    } finally {
-      setLoading(false);
+    setSessions(sessionsRes.data || []);
+    setClasses(classesRes.data || []);
+    setSubjects(subjectsRes.data || []);
+    setTerms(termsRes.data || []);
+    setClassSubjects(assignRes.data || []);
+
+    // Staff is separate so a missing /staff endpoint
+    // doesn't break the entire Academics page.
+    try {
+      const staffRes = await api.get("/staff");
+      setStaffList(staffRes.data?.data || staffRes.data || []);
+    } catch (staffErr) {
+      console.warn("Staff endpoint unavailable:", staffErr);
+      setStaffList([]);
     }
-  };
+  } catch (err: any) {
+    console.error("Failed to load academics data:", err);
+
+    if (err.response?.status === 401) {
+      removeToken();
+      router.push("/login");
+    }
+  } finally {
+    setLoading(false);
+  }
+};
 
   useEffect(() => {
     const token = getToken();
