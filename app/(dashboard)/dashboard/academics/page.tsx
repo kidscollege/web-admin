@@ -87,13 +87,13 @@ const [savingTerm, setSavingTerm] = useState(false);
     setTerms(termsRes.data || []);
     setClassSubjects(assignRes.data || []);
 
-    // Staff is separate so a missing /staff endpoint
+    // Staff is separate so a missing /hr/staff endpoint
     // doesn't break the entire Academics page.
     try {
-      const staffRes = await api.get("/staff");
+      const staffRes = await api.get("/hr/staff");
       setStaffList(staffRes.data?.data || staffRes.data || []);
     } catch (staffErr) {
-      console.warn("Staff endpoint unavailable:", staffErr);
+      console.error("Staff endpoint unavailable:", staffErr);
       setStaffList([]);
     }
   } catch (err: any) {

@@ -40,7 +40,7 @@ export default function HomePage() {
             <div className="absolute bottom-4 -left-4 w-24 h-24 rounded-full bg-purple-200/80 blur-xl" />
             <div className="relative bg-white rounded-[2rem] p-4 shadow-xl shadow-purple-100 border border-purple-50">
               <Image
-                src="/logo.png"
+                src="/hero1.jpg"
                 alt="Kids College"
                 width={320}
                 height={320}
@@ -138,7 +138,7 @@ export default function HomePage() {
           <div className="bg-gradient-to-br from-purple-100 to-yellow-50 rounded-[2rem] p-8 min-h-[280px] flex items-center justify-center border border-purple-100">
             <div className="text-center">
               <Image
-                src="/logo.png"
+                src="/hero2.jpg"
                 alt="Kids College"
                 width={160}
                 height={160}
