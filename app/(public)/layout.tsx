@@ -78,7 +78,22 @@ export default function PublicLayout({
                     }`}
                   >
                     {link.name}
-                    <span className={`text-xs transition-transform ${aboutOpen ? "rotate-180" : ""}`}>⌄</span>
+                    <svg
+                      aria-hidden="true"
+                      className={`h-4 w-4 text-[#7C3AED] transition-transform duration-200 ${
+                        aboutOpen ? "rotate-180" : ""
+                      }`}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="m6 9 6 6 6-6"
+                      />
+                    </svg>
                   </button>
                   {aboutOpen && (
                     <div className="absolute left-0 top-full z-50 mt-3 w-48 rounded-xl border border-purple-100 bg-white p-2 shadow-lg">
@@ -150,7 +165,22 @@ export default function PublicLayout({
                       className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left text-sm font-medium text-slate-700 hover:bg-purple-50"
                     >
                       {link.name}
-                      <span className={`text-xs transition-transform ${aboutOpen ? "rotate-180" : ""}`}>⌄</span>
+                      <svg
+                        aria-hidden="true"
+                        className={`h-4 w-4 text-[#7C3AED] transition-transform duration-200 ${
+                          aboutOpen ? "rotate-180" : ""
+                        }`}
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="m6 9 6 6 6-6"
+                        />
+                      </svg>
                     </button>
                     {aboutOpen && (
                       <div className="ml-3 mt-1 space-y-1 border-l border-purple-100 pl-2">

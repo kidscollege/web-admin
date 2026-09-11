@@ -6,6 +6,7 @@ export default function ContactPage() {
   const [form, setForm] = useState({
     name: "",
     email: "",
+    countryCode: "+234",
     phone: "",
     message: "",
   });
@@ -13,6 +14,21 @@ export default function ContactPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (form.phone) {
+      if (!/^\+\d{1,3}$/.test(form.countryCode)) {
+        return;
+      }
+
+      if (!/^\d+$/.test(form.phone) || form.phone.length < 7 || form.phone.length > 14) {
+        return;
+      }
+
+      if (form.countryCode === "+234" && form.phone.length !== 10) {
+        return;
+      }
+    }
+
     setSent(true);
   };
 
@@ -108,15 +124,41 @@ export default function ContactPage() {
                       className="w-full border border-purple-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
                     />
                   </div>
-                  <div>
+                  <div className="sm:col-span-2">
                     <label className="block text-sm font-medium mb-1">Phone</label>
-                    <input
-                      value={form.phone}
-                      onChange={(e) =>
-                        setForm({ ...form, phone: e.target.value })
-                      }
-                      className="w-full border border-purple-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
-                    />
+                    <div className="grid grid-cols-[minmax(96px,0.35fr)_1fr] gap-2">
+                      <input
+                        value={form.countryCode}
+                        onChange={(e) =>
+                          setForm({
+                            ...form,
+                            countryCode: e.target.value.replace(/[^+\d]/g, "").slice(0, 4),
+                          })
+                        }
+                        inputMode="tel"
+                        maxLength={4}
+                        placeholder="+234"
+                        aria-label="Country code"
+                        className="w-full border border-purple-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
+                      />
+                      <input
+                        value={form.phone}
+                        onChange={(e) =>
+                          setForm({
+                            ...form,
+                            phone: e.target.value.replace(/\D/g, "").slice(0, 14),
+                          })
+                        }
+                        inputMode="numeric"
+                        maxLength={14}
+                        placeholder="8012345678"
+                        aria-label="Phone number without country code"
+                        className="w-full border border-purple-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
+                      />
+                    </div>
+                    <p className="mt-1 text-xs text-slate-500">
+                      Nigeria requires 10 digits after +234. Other countries allow 7 to 14 digits.
+                    </p>
                   </div>
                 </div>
 
