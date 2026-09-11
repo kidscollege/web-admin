@@ -1,14 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import api from "@/lib/api";
 import { setToken } from "@/lib/auth";
 
 export default function LoginPage() {
-  const router = useRouter();
   const [email, setEmail] = useState("admin@school.com");
   const [password, setPassword] = useState("Admin@123");
   const [loading, setLoading] = useState(false);
@@ -37,21 +35,21 @@ export default function LoginPage() {
       const role = String(user?.role || "").trim().toUpperCase();
 
       if (role === "PARENT") {
-        window.location.href = "/parent";
+        window.location.replace("/parent");
         return;
       }
 
       if (role === "TEACHER") {
-        window.location.href = "/teacher";
+        window.location.replace("/teacher");
         return;
       }
 
       if (role === "BURSAR") {
-        window.location.href = "/bursary";
+        window.location.replace("/bursary");
         return;
       }
 
-      window.location.href = "/dashboard";
+      window.location.replace("/dashboard");
     } catch (err: any) {
       setError(
         err.response?.data?.message || "Login failed. Please try again."
