@@ -33,10 +33,15 @@ const token = access_token || response.data.accessToken || response.data.token;
 setToken(token);
 localStorage.setItem("user", JSON.stringify(user));
 
+
+
+
 if (user.role === "PARENT") {
   router.push("/parent");
 } else if (user.role === "TEACHER") {
   router.push("/teacher");
+} else if (user.role === "BURSAR") {
+  router.push("/bursary");
 } else {
   router.push("/dashboard");
 }

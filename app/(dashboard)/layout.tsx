@@ -79,29 +79,48 @@ export default function DashboardLayout({
   const [departmentsOpen, setDepartmentsOpen] = useState(false);
 
   useEffect(() => {
-    const token = getToken();
-    if (!token) {
-      router.push("/login");
-      return;
-    }
+  const token = getToken();
+  if (!token) {
+    router.push("/login");
+    return;
+  }
 
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
+  const storedUser = localStorage.getItem("user");
+  if (!storedUser) {
+    removeToken();
+    router.push("/login");
+    return;
+  }
 
-    setDepartmentsOpen(pathname.startsWith("/dashboard/departments"));
+  const parsedUser = JSON.parse(storedUser);
+  setUser(parsedUser);
 
-    const handleResize = () => {
-      const desktop = window.innerWidth >= 1024;
-      setIsDesktop(desktop);
-      setSidebarOpen(desktop);
-    };
+  // Role-based protection
+  if (parsedUser.role === "TEACHER") {
+  router.replace("/teacher");
+  return;
+}
+if (parsedUser.role === "PARENT") {
+  router.replace("/parent");
+  return;
+}
+if (parsedUser.role === "BURSAR") {
+  router.replace("/bursary");
+  return;
+}
 
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, [pathname, router]);
+  setDepartmentsOpen(pathname.startsWith("/dashboard/departments"));
+
+  const handleResize = () => {
+    const desktop = window.innerWidth >= 1024;
+    setIsDesktop(desktop);
+    setSidebarOpen(desktop);
+  };
+
+  handleResize();
+  window.addEventListener("resize", handleResize);
+  return () => window.removeEventListener("resize", handleResize);
+}, [pathname, router]);
 
   const handleLogout = () => {
     removeToken();
