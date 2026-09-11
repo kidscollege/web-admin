@@ -49,6 +49,11 @@ export default function LoginPage() {
         return;
       }
 
+        if (role === "PRINCIPAL") {
+        window.location.replace("/principal");
+        return;
+      }
+
       window.location.replace("/dashboard");
     } catch (err: any) {
       setError(

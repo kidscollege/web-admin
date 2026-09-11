@@ -128,6 +128,11 @@ export default function DashboardLayout({
       return;
     }
 
+    if (role === "PRINCIPAL") {
+  window.location.href = "/principal";
+  return;
+}
+
     setDepartmentsOpen(pathname.startsWith("/dashboard/departments"));
 
     const handleResize = () => {
