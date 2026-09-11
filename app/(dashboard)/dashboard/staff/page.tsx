@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import api from "@/lib/api";
 import { getToken, removeToken } from "@/lib/auth";
+import CredentialModal from "@/components/CredentialModal";
 
 export default function StaffPage() {
   const router = useRouter();
@@ -13,6 +14,11 @@ export default function StaffPage() {
   const [showModal, setShowModal] = useState(false);
   const [editingStaff, setEditingStaff] = useState<any | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [credentials, setCredentials] = useState<{
+    title: string;
+    email: string;
+    temporaryPassword: string;
+  } | null>(null);
 
  const [form, setForm] = useState({
   firstName: "",
@@ -132,9 +138,11 @@ export default function StaffPage() {
 
       const login = res.data?.login;
       if (login?.temporaryPassword) {
-        alert(
-          `Staff created successfully.\n\nLogin Email: ${login.email}\nTemporary Password: ${login.temporaryPassword}\n\nCopy and share this password now.`
-        );
+        setCredentials({
+          title: `${form.role === "BURSAR" ? "Bursar" : "Staff"} account created`,
+          email: login.email,
+          temporaryPassword: login.temporaryPassword,
+        });
       } else {
         alert("Staff created successfully");
       }
@@ -529,6 +537,15 @@ export default function StaffPage() {
             </form>
           </div>
         </div>
+      )}
+
+      {credentials && (
+        <CredentialModal
+          title={credentials.title}
+          email={credentials.email}
+          temporaryPassword={credentials.temporaryPassword}
+          onClose={() => setCredentials(null)}
+        />
       )}
     </div>
   );

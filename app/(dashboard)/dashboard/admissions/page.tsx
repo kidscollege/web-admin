@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import api from "@/lib/api";
 import { getToken, removeToken } from "@/lib/auth";
+import CredentialModal from "@/components/CredentialModal";
 
 export default function AdmissionsPage() {
   const router = useRouter();
@@ -14,6 +15,11 @@ export default function AdmissionsPage() {
   const [showModal, setShowModal] = useState(false);
   const [selectedApp, setSelectedApp] = useState<any>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [credentials, setCredentials] = useState<{
+    title: string;
+    email: string;
+    temporaryPassword: string;
+  } | null>(null);
 
   const fetchData = async () => {
     try {
@@ -72,9 +78,11 @@ export default function AdmissionsPage() {
     const parentAccount = res.data?.parentAccount;
 
     if (parentAccount?.created && parentAccount?.temporaryPassword) {
-      alert(
-        `Student admitted successfully.\n\nParent login created:\nEmail: ${parentAccount.email}\nTemporary Password: ${parentAccount.temporaryPassword}\n\nPlease copy and share this with the parent.`
-      );
+      setCredentials({
+        title: "Parent account created",
+        email: parentAccount.email,
+        temporaryPassword: parentAccount.temporaryPassword,
+      });
     } else if (parentAccount?.email) {
       alert(
         `Student admitted successfully.\n\nParent already exists:\nEmail: ${parentAccount.email}`
@@ -442,6 +450,15 @@ export default function AdmissionsPage() {
           </table>
         </div>
       </div>
+
+      {credentials && (
+        <CredentialModal
+          title={credentials.title}
+          email={credentials.email}
+          temporaryPassword={credentials.temporaryPassword}
+          onClose={() => setCredentials(null)}
+        />
+      )}
     </div>
   );
 }
