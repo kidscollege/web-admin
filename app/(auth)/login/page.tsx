@@ -26,25 +26,25 @@ export default function LoginPage() {
         password,
       });
 
-    const { access_token, user } = response.data;
+      const { access_token, user } = response.data;
 
-// support both response shapes
-const token = access_token || response.data.accessToken || response.data.token;
-setToken(token);
-localStorage.setItem("user", JSON.stringify(user));
+      const token =
+        access_token || response.data.accessToken || response.data.token;
 
+      setToken(token);
+      localStorage.setItem("user", JSON.stringify(user));
 
+      const role = String(user?.role || "").toUpperCase();
 
-
-if (user.role === "PARENT") {
-  router.push("/parent");
-} else if (user.role === "TEACHER") {
-  router.push("/teacher");
-} else if (user.role === "BURSAR") {
-  router.push("/bursary");
-} else {
-  router.push("/dashboard");
-}
+      if (role === "PARENT") {
+        router.push("/parent");
+      } else if (role === "TEACHER") {
+        router.push("/teacher");
+      } else if (role === "BURSAR") {
+        router.push("/bursary");
+      } else {
+        router.push("/dashboard");
+      }
     } catch (err: any) {
       setError(
         err.response?.data?.message || "Login failed. Please try again."
@@ -143,7 +143,10 @@ if (user.role === "PARENT") {
 
           <p className="text-center text-sm text-slate-500 mt-6">
             Return to{" "}
-            <Link href="/" className="text-[#7C3AED] hover:underline font-medium">
+            <Link
+              href="/"
+              className="text-[#7C3AED] hover:underline font-medium"
+            >
               Kids College website
             </Link>
           </p>
@@ -152,7 +155,6 @@ if (user.role === "PARENT") {
 
       {/* Right branded side */}
       <div className="hidden lg:flex relative items-center justify-center bg-[#2E1A5A] overflow-hidden">
-        {/* soft grid / glow */}
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(124,58,237,0.25),transparent_55%)]" />
         <div className="absolute inset-0 opacity-20 bg-[linear-gradient(to_right,#ffffff10_1px,transparent_1px),linear-gradient(to_bottom,#ffffff10_1px,transparent_1px)] bg-[size:32px_32px]" />
 
