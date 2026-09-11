@@ -37,14 +37,21 @@ export default function LoginPage() {
       const role = String(user?.role || "").toUpperCase();
 
       if (role === "PARENT") {
-        router.push("/parent");
-      } else if (role === "TEACHER") {
-        router.push("/teacher");
-      } else if (role === "BURSAR") {
-        router.push("/bursar");
-      } else {
-        router.push("/dashboard");
+        window.location.href = "/parent";
+        return;
       }
+
+      if (role === "TEACHER") {
+        window.location.href = "/teacher";
+        return;
+      }
+
+      if (role === "BURSAR") {
+        window.location.href = "/bursary";
+        return;
+      }
+
+      window.location.href = "/dashboard";
     } catch (err: any) {
       setError(
         err.response?.data?.message || "Login failed. Please try again."

@@ -114,17 +114,17 @@ export default function DashboardLayout({
     const role = String(parsedUser.role || "").toUpperCase();
 
     if (role === "TEACHER") {
-      router.replace("/teacher");
+      window.location.href = "/teacher";
       return;
     }
 
     if (role === "PARENT") {
-      router.replace("/parent");
+      window.location.href = "/parent";
       return;
     }
 
     if (role === "BURSAR") {
-      router.replace("/bursar");
+      window.location.href = "/bursary";
       return;
     }
 

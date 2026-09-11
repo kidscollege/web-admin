@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
+import Link from "next/link";
 import { getToken, removeToken } from "@/lib/auth";
 
 export default function BursaryLayout({
@@ -10,6 +11,7 @@ export default function BursaryLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [ready, setReady] = useState(false);
   const [user, setUser] = useState<any>(null);
 
@@ -18,7 +20,7 @@ export default function BursaryLayout({
     const stored = localStorage.getItem("user");
 
     if (!token || !stored) {
-      router.replace("/login");
+      window.location.href = "/login";
       return;
     }
 
@@ -26,13 +28,13 @@ export default function BursaryLayout({
     const role = String(parsed.role || "").toUpperCase();
 
     if (role !== "BURSAR" && role !== "SUPER_ADMIN") {
-      router.replace("/dashboard");
+      window.location.href = "/dashboard";
       return;
     }
 
     setUser(parsed);
     setReady(true);
-  }, [router]);
+  }, []);
 
   if (!ready) {
     return (
@@ -42,6 +44,12 @@ export default function BursaryLayout({
     );
   }
 
+  const links = [
+    { name: "Dashboard", href: "/bursary" },
+    { name: "Invoices", href: "/bursary/invoices" },
+    { name: "Payments", href: "/bursary/payments" },
+  ];
+
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
       <header className="bg-white border-b px-4 py-4 flex items-center justify-between">
@@ -49,6 +57,21 @@ export default function BursaryLayout({
           <p className="font-bold text-[#17233C]">Kids College</p>
           <p className="text-xs text-slate-500">Bursary Portal</p>
         </div>
+        <nav className="hidden sm:flex items-center gap-2">
+          {links.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className={`text-sm px-3 py-1.5 rounded-lg ${
+                pathname === link.href
+                  ? "bg-[#EEF4FF] text-[#1E4D9B]"
+                  : "text-slate-600 hover:bg-slate-100"
+              }`}
+            >
+              {link.name}
+            </Link>
+          ))}
+        </nav>
         <div className="flex items-center gap-3">
           <span className="text-sm text-slate-600">
             {user?.firstName} {user?.lastName}
@@ -57,7 +80,7 @@ export default function BursaryLayout({
             onClick={() => {
               removeToken();
               localStorage.removeItem("user");
-              router.push("/login");
+              window.location.href = "/login";
             }}
             className="text-sm border px-3 py-1.5 rounded-lg"
           >
@@ -65,7 +88,6 @@ export default function BursaryLayout({
           </button>
         </div>
       </header>
-
       <main className="max-w-6xl mx-auto p-4 sm:p-6">{children}</main>
     </div>
   );
