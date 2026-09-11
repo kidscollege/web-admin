@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { getToken, removeToken } from "@/lib/auth";
@@ -20,7 +20,6 @@ export default function PrincipalLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const router = useRouter();
   const pathname = usePathname();
   const [ready, setReady] = useState(false);
   const [user, setUser] = useState<any>(null);
@@ -33,12 +32,14 @@ export default function PrincipalLayout({
       window.location.href = "/login";
       return;
     }
+
     const parsed = JSON.parse(stored);
-    const role = String(parsed.role || "").trim().toUpperCase();
+    const role = String(parsed.role || "").toUpperCase();
     if (role !== "PRINCIPAL" && role !== "SUPER_ADMIN") {
       window.location.href = "/dashboard";
       return;
     }
+
     setUser(parsed);
     setReady(true);
   }, []);
@@ -118,11 +119,7 @@ export default function PrincipalLayout({
 
       <div className="lg:ml-72">
         <header className="sticky top-0 z-30 bg-white/80 backdrop-blur border-b border-purple-100 px-4 py-4 flex items-center gap-3">
-          <button
-            className="lg:hidden p-2"
-            onClick={() => setOpen(true)}
-            aria-label="Open menu"
-          >
+          <button className="lg:hidden p-2" onClick={() => setOpen(true)}>
             ☰
           </button>
           <div>
