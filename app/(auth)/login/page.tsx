@@ -7,8 +7,8 @@ import api from "@/lib/api";
 import { setToken } from "@/lib/auth";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("admin@school.com");
-  const [password, setPassword] = useState("Admin@123");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);

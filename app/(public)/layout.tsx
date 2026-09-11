@@ -7,13 +7,20 @@ import { usePathname } from "next/navigation";
 
 const navLinks = [
   { name: "Home", href: "/" },
-  { name: "About", href: "/about" },
+  {
+    name: "About",
+    href: "/about",
+    children: [
+      { name: "About Us", href: "/about" },
+      { name: "FAQ", href: "/faq" },
+      { name: "Careers", href: "/careers" },
+      { name: "Our Facilities", href: "/about/facilities" },
+    ],
+  },
   { name: "Academics", href: "/academics" },
   { name: "Admissions", href: "/admissions" },
   { name: "Gallery", href: "/gallery" },
   { name: "News & Events", href: "/news-events" },
-  { name: "FAQ", href: "/faq" },
-  { name: "Careers", href: "/careers" },
   { name: "Contact", href: "/contact" },
 ];
 
@@ -23,6 +30,7 @@ export default function PublicLayout({
   children: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
+  const [aboutOpen, setAboutOpen] = useState(false);
   const pathname = usePathname();
 
   return (
@@ -57,17 +65,53 @@ export default function PublicLayout({
           {/* Desktop nav */}
           <nav className="hidden lg:flex items-center gap-6 text-sm font-medium">
             {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={`transition ${
-                  pathname === link.href
-                    ? "text-[#7C3AED]"
-                    : "text-slate-600 hover:text-[#7C3AED]"
-                }`}
-              >
-                {link.name}
-              </Link>
+              link.children ? (
+                <div key={link.href} className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setAboutOpen((isOpen) => !isOpen)}
+                    aria-expanded={aboutOpen}
+                    className={`flex items-center gap-1 transition ${
+                      link.children.some((child) => pathname === child.href)
+                        ? "text-[#7C3AED]"
+                        : "text-slate-600 hover:text-[#7C3AED]"
+                    }`}
+                  >
+                    {link.name}
+                    <span className={`text-xs transition-transform ${aboutOpen ? "rotate-180" : ""}`}>⌄</span>
+                  </button>
+                  {aboutOpen && (
+                    <div className="absolute left-0 top-full z-50 mt-3 w-48 rounded-xl border border-purple-100 bg-white p-2 shadow-lg">
+                      {link.children.map((child) => (
+                        <Link
+                          key={child.href}
+                          href={child.href}
+                          onClick={() => setAboutOpen(false)}
+                          className={`block rounded-lg px-3 py-2 text-sm transition ${
+                            pathname === child.href
+                              ? "bg-purple-50 text-[#7C3AED]"
+                              : "text-slate-600 hover:bg-purple-50 hover:text-[#7C3AED]"
+                          }`}
+                        >
+                          {child.name}
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={`transition ${
+                    pathname === link.href
+                      ? "text-[#7C3AED]"
+                      : "text-slate-600 hover:text-[#7C3AED]"
+                  }`}
+                >
+                  {link.name}
+                </Link>
+              )
             ))}
             <Link
               href="/admissions/apply"
@@ -97,18 +141,50 @@ export default function PublicLayout({
           <div className="lg:hidden border-t border-purple-100 bg-white">
             <div className="px-4 py-4 space-y-2">
               {navLinks.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  onClick={() => setOpen(false)}
-                  className={`block px-3 py-2.5 rounded-xl text-sm font-medium ${
-                    pathname === link.href
-                      ? "bg-purple-50 text-[#7C3AED]"
-                      : "text-slate-700 hover:bg-purple-50"
-                  }`}
-                >
-                  {link.name}
-                </Link>
+                link.children ? (
+                  <div key={link.href}>
+                    <button
+                      type="button"
+                      onClick={() => setAboutOpen((isOpen) => !isOpen)}
+                      aria-expanded={aboutOpen}
+                      className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left text-sm font-medium text-slate-700 hover:bg-purple-50"
+                    >
+                      {link.name}
+                      <span className={`text-xs transition-transform ${aboutOpen ? "rotate-180" : ""}`}>⌄</span>
+                    </button>
+                    {aboutOpen && (
+                      <div className="ml-3 mt-1 space-y-1 border-l border-purple-100 pl-2">
+                        {link.children.map((child) => (
+                          <Link
+                            key={child.href}
+                            href={child.href}
+                            onClick={() => setOpen(false)}
+                            className={`block rounded-lg px-3 py-2 text-sm font-medium ${
+                              pathname === child.href
+                                ? "bg-purple-50 text-[#7C3AED]"
+                                : "text-slate-700 hover:bg-purple-50"
+                            }`}
+                          >
+                            {child.name}
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    onClick={() => setOpen(false)}
+                    className={`block rounded-xl px-3 py-2.5 text-sm font-medium ${
+                      pathname === link.href
+                        ? "bg-purple-50 text-[#7C3AED]"
+                        : "text-slate-700 hover:bg-purple-50"
+                    }`}
+                  >
+                    {link.name}
+                  </Link>
+                )
               ))}
               <Link
                 href="/admissions/apply"
