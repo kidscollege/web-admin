@@ -1,9 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { getToken, removeToken } from "@/lib/auth";
+
+const links = [
+  { name: "Dashboard", href: "/bursary" },
+  { name: "Invoices", href: "/bursary/invoices" },
+  { name: "Payments", href: "/bursary/payments" },
+];
 
 export default function BursaryLayout({
   children,
@@ -14,24 +21,21 @@ export default function BursaryLayout({
   const pathname = usePathname();
   const [ready, setReady] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const [open, setOpen] = useState(false);
 
   useEffect(() => {
     const token = getToken();
     const stored = localStorage.getItem("user");
-
     if (!token || !stored) {
       window.location.href = "/login";
       return;
     }
-
     const parsed = JSON.parse(stored);
-    const role = String(parsed.role || "").trim().toUpperCase();
-
+    const role = String(parsed.role || "").toUpperCase();
     if (role !== "BURSAR" && role !== "SUPER_ADMIN") {
       window.location.href = "/dashboard";
       return;
     }
-
     setUser(parsed);
     setReady(true);
   }, []);
@@ -44,51 +48,91 @@ export default function BursaryLayout({
     );
   }
 
-  const links = [
-    { name: "Dashboard", href: "/bursary" },
-    { name: "Invoices", href: "/bursary/invoices" },
-    { name: "Payments", href: "/bursary/payments" },
-  ];
-
   return (
-    <div className="min-h-screen bg-[#F8FAFC]">
-      <header className="bg-white border-b px-4 py-4 flex items-center justify-between">
-        <div>
-          <p className="font-bold text-[#17233C]">Kids College</p>
-          <p className="text-xs text-slate-500">Bursary Portal</p>
+    <div className="min-h-screen bg-[#F6F3FF] text-[#2E1A5A]">
+      {open && (
+        <div
+          className="fixed inset-0 bg-black/40 z-40 lg:hidden"
+          onClick={() => setOpen(false)}
+        />
+      )}
+
+      <aside
+        className={`fixed top-0 left-0 z-50 h-full w-72 bg-white border-r border-purple-100 transition-transform ${
+          open ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+        }`}
+      >
+        <div className="flex items-center gap-3 px-5 py-5 border-b border-purple-100">
+          <Image
+            src="/logo.png"
+            alt="Kids College"
+            width={40}
+            height={40}
+            className="rounded-full"
+          />
+          <div>
+            <p className="font-bold">Kids College</p>
+            <p className="text-[10px] uppercase tracking-widest text-[#7C3AED]">
+              Bursary
+            </p>
+          </div>
         </div>
-        <nav className="hidden sm:flex items-center gap-2">
+
+        <nav className="p-3 space-y-1">
           {links.map((link) => (
             <Link
               key={link.href}
               href={link.href}
-              className={`text-sm px-3 py-1.5 rounded-lg ${
+              onClick={() => setOpen(false)}
+              className={`block rounded-xl px-4 py-3 text-sm font-medium ${
                 pathname === link.href
-                  ? "bg-[#EEF4FF] text-[#1E4D9B]"
-                  : "text-slate-600 hover:bg-slate-100"
+                  ? "bg-[#F3E8FF] text-[#7C3AED]"
+                  : "text-slate-600 hover:bg-purple-50"
               }`}
             >
               {link.name}
             </Link>
           ))}
         </nav>
-        <div className="flex items-center gap-3">
-          <span className="text-sm text-slate-600">
+
+        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-purple-100">
+          <p className="text-sm font-semibold">
             {user?.firstName} {user?.lastName}
-          </span>
+          </p>
+          <p className="text-xs text-slate-500 mb-3">{user?.role}</p>
           <button
             onClick={() => {
               removeToken();
               localStorage.removeItem("user");
               window.location.href = "/login";
             }}
-            className="text-sm border px-3 py-1.5 rounded-lg"
+            className="w-full text-sm border border-red-200 text-red-500 py-2 rounded-xl"
           >
             Logout
           </button>
         </div>
-      </header>
-      <main className="max-w-6xl mx-auto p-4 sm:p-6">{children}</main>
+      </aside>
+
+      <div className="lg:ml-72">
+        <header className="sticky top-0 z-30 bg-white/80 backdrop-blur border-b border-purple-100 px-4 py-4 flex items-center gap-3">
+          <button
+            className="lg:hidden p-2"
+            onClick={() => setOpen(true)}
+            aria-label="Open menu"
+          >
+            ☰
+          </button>
+          <div>
+            <p className="text-[11px] uppercase tracking-widest text-[#7C3AED]">
+              Bursary portal
+            </p>
+            <h2 className="font-bold">
+              {links.find((l) => l.href === pathname)?.name || "Bursary"}
+            </h2>
+          </div>
+        </header>
+        <main className="p-4 sm:p-6 lg:p-8">{children}</main>
+      </div>
     </div>
   );
 }

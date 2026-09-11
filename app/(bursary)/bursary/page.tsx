@@ -58,26 +58,26 @@ export default function BursaryDashboardPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-[#17233C]">Bursary Dashboard</h1>
+        <h1 className="text-2xl font-extrabold text-[#2E1A5A]">Bursary Dashboard</h1>
         <p className="text-sm text-slate-500 mt-1">
           Fees, invoices, and payments
         </p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white rounded-xl border p-4">
+        <div className="bg-white rounded-2xl border border-purple-100 p-5 shadow-sm">
           <p className="text-xs text-slate-500">Pending invoices</p>
           <p className="text-2xl font-bold mt-1">{pending.length}</p>
         </div>
-        <div className="bg-white rounded-xl border p-4">
+        <div className="bg-white rounded-2xl border border-purple-100 p-5 shadow-sm">
           <p className="text-xs text-slate-500">Paid invoices</p>
           <p className="text-2xl font-bold mt-1">{paid.length}</p>
         </div>
-        <div className="bg-white rounded-xl border p-4">
+        <div className="bg-white rounded-2xl border border-purple-100 p-5 shadow-sm">
           <p className="text-xs text-slate-500">Amount collected</p>
           <p className="text-2xl font-bold mt-1">{naira(collected)}</p>
         </div>
-        <div className="bg-white rounded-xl border p-4">
+        <div className="bg-white rounded-2xl border border-purple-100 p-5 shadow-sm">
           <p className="text-xs text-slate-500">Outstanding</p>
           <p className="text-2xl font-bold mt-1">{naira(outstanding)}</p>
         </div>
@@ -86,13 +86,13 @@ export default function BursaryDashboardPage() {
       <div className="flex flex-col sm:flex-row gap-3">
         <Link
           href="/bursary/invoices"
-          className="bg-[#17366F] text-white px-4 py-2.5 rounded-lg text-sm text-center"
+          className="bg-[#7C3AED] hover:bg-[#6D28D9] text-white px-5 py-2.5 rounded-full text-sm font-semibold"
         >
           View invoices
         </Link>
         <Link
           href="/bursary/payments"
-          className="border px-4 py-2.5 rounded-lg text-sm text-center"
+          className="bg-[#7C3AED] hover:bg-[#6D28D9] text-white px-5 py-2.5 rounded-full text-sm font-semibold"
         >
           Record payment
         </Link>
