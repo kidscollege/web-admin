@@ -34,8 +34,8 @@ export default function PrincipalLayout({
       return;
     }
     const parsed = JSON.parse(stored);
-    const role = String(parsed.role || "").toUpperCase();
-    if (role !== "BURSAR" && role !== "SUPER_ADMIN") {
+    const role = String(parsed.role || "").trim().toUpperCase();
+    if (role !== "PRINCIPAL" && role !== "SUPER_ADMIN") {
       window.location.href = "/dashboard";
       return;
     }
