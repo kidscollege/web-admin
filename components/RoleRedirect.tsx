@@ -37,6 +37,7 @@ export default function RoleRedirect() {
     else if (role === "TEACHER") send("/teacher");
     else if (role === "PARENT") send("/parent");
     else if (role === "PRINCIPAL") send("/principal");
+    else if (role === "HR_ADMIN") send("/hr");
   }, []);
 
   return null;

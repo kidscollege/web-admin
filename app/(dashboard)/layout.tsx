@@ -128,6 +128,11 @@ export default function DashboardLayout({
       return;
     }
 
+    if (role === "HR_ADMIN") {
+  window.location.href = "/hr";
+  return;
+}
+
     if (role === "PRINCIPAL") {
   window.location.href = "/principal";
   return;

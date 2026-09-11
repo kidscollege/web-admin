@@ -54,6 +54,11 @@ export default function LoginPage() {
         return;
       }
 
+      if (role === "HR_ADMIN") {
+  window.location.replace("/hr");
+  return;
+}
+
       window.location.replace("/dashboard");
     } catch (err: any) {
       setError(
