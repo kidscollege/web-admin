@@ -17,6 +17,7 @@ export default function ApplyPage() {
     dateOfBirth: "",
     applyingClass: "Nursery",
     parentName: "",
+    countryCode: "+234",
     parentPhone: "",
     parentEmail: "",
     notes: "",
@@ -28,6 +29,33 @@ export default function ApplyPage() {
     setError("");
     setSuccess(null);
 
+    const countryCode = form.countryCode.trim();
+    const subscriberNumber = form.parentPhone.trim();
+
+    if (!/^\+\d{1,3}$/.test(countryCode)) {
+      setError("Enter a valid country code, for example +234.");
+      setSubmitting(false);
+      return;
+    }
+
+    if (!/^\d+$/.test(subscriberNumber)) {
+      setError("Phone number must contain digits only.");
+      setSubmitting(false);
+      return;
+    }
+
+    if (countryCode === "+234" && subscriberNumber.length !== 10) {
+      setError("Nigerian phone numbers must contain exactly 10 digits after +234.");
+      setSubmitting(false);
+      return;
+    }
+
+    if (subscriberNumber.length < 7 || subscriberNumber.length > 14) {
+      setError("Enter a valid phone number with 7 to 14 digits after the country code.");
+      setSubmitting(false);
+      return;
+    }
+
     try {
       const res = await api.post("/admissions/applications", {
         firstName: form.firstName,
@@ -37,7 +65,7 @@ export default function ApplyPage() {
         dateOfBirth: form.dateOfBirth || undefined,
         applyingClass: form.applyingClass,
         parentName: form.parentName || undefined,
-        parentPhone: form.parentPhone || undefined,
+        parentPhone: `${countryCode}${subscriberNumber}`,
         parentEmail: form.parentEmail || undefined,
         notes: form.notes || undefined,
       });
@@ -51,6 +79,7 @@ export default function ApplyPage() {
         dateOfBirth: "",
         applyingClass: "Nursery",
         parentName: "",
+        countryCode: "+234",
         parentPhone: "",
         parentEmail: "",
         notes: "",
@@ -265,18 +294,45 @@ export default function ApplyPage() {
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
+                    <div className="sm:col-span-2">
                       <label className="block text-sm font-medium mb-1">
                         Parent Phone *
                       </label>
-                      <input
-                        required
-                        value={form.parentPhone}
-                        onChange={(e) =>
-                          setForm({ ...form, parentPhone: e.target.value })
-                        }
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
+                      <div className="grid grid-cols-[minmax(96px,0.35fr)_1fr] gap-2">
+                        <input
+                          required
+                          value={form.countryCode}
+                          onChange={(e) =>
+                            setForm({
+                              ...form,
+                              countryCode: e.target.value.replace(/[^+\d]/g, "").slice(0, 4),
+                            })
+                          }
+                          inputMode="tel"
+                          maxLength={4}
+                          placeholder="+234"
+                          aria-label="Country code"
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                        <input
+                          required
+                          value={form.parentPhone}
+                          onChange={(e) =>
+                            setForm({
+                              ...form,
+                              parentPhone: e.target.value.replace(/\D/g, "").slice(0, 14),
+                            })
+                          }
+                          inputMode="numeric"
+                          maxLength={14}
+                          placeholder="8012345678"
+                          aria-label="Phone number without country code"
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                      <p className="mt-1 text-xs text-gray-500">
+                        Enter the country code separately. Nigeria requires 10 digits after +234.
+                      </p>
                     </div>
                     <div>
                       <label className="block text-sm font-medium mb-1">
