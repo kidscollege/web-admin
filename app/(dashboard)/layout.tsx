@@ -124,7 +124,7 @@ export default function DashboardLayout({
     }
 
     if (role === "BURSAR") {
-      router.replace("/bursary");
+      router.replace("/bursar");
       return;
     }
 
