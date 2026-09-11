@@ -4,7 +4,11 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getToken, removeToken } from "@/lib/auth";
 
-export default function BursaryLayout({ children }: { children: React.ReactNode }) {
+export default function BursaryLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const router = useRouter();
   const [ready, setReady] = useState(false);
   const [user, setUser] = useState<any>(null);
@@ -12,6 +16,7 @@ export default function BursaryLayout({ children }: { children: React.ReactNode 
   useEffect(() => {
     const token = getToken();
     const stored = localStorage.getItem("user");
+
     if (!token || !stored) {
       router.replace("/login");
       return;
@@ -19,6 +24,7 @@ export default function BursaryLayout({ children }: { children: React.ReactNode 
 
     const parsed = JSON.parse(stored);
     const role = String(parsed.role || "").toUpperCase();
+
     if (role !== "BURSAR" && role !== "SUPER_ADMIN") {
       router.replace("/dashboard");
       return;
@@ -29,7 +35,11 @@ export default function BursaryLayout({ children }: { children: React.ReactNode 
   }, [router]);
 
   if (!ready) {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center text-slate-500">
+        Loading...
+      </div>
+    );
   }
 
   return (
@@ -55,6 +65,7 @@ export default function BursaryLayout({ children }: { children: React.ReactNode 
           </button>
         </div>
       </header>
+
       <main className="max-w-6xl mx-auto p-4 sm:p-6">{children}</main>
     </div>
   );
