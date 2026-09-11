@@ -111,7 +111,7 @@ export default function DashboardLayout({
     const parsedUser = JSON.parse(storedUser);
     setUser(parsedUser);
 
-    const role = String(parsedUser.role || "").toUpperCase();
+    const role = String(parsedUser.role || "").trim().toUpperCase();
 
     if (role === "TEACHER") {
       window.location.href = "/teacher";

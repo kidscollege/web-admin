@@ -25,7 +25,7 @@ export default function BursaryLayout({
     }
 
     const parsed = JSON.parse(stored);
-    const role = String(parsed.role || "").toUpperCase();
+    const role = String(parsed.role || "").trim().toUpperCase();
 
     if (role !== "BURSAR" && role !== "SUPER_ADMIN") {
       window.location.href = "/dashboard";

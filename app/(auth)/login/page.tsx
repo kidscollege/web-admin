@@ -34,7 +34,7 @@ export default function LoginPage() {
       setToken(token);
       localStorage.setItem("user", JSON.stringify(user));
 
-      const role = String(user?.role || "").toUpperCase();
+      const role = String(user?.role || "").trim().toUpperCase();
 
       if (role === "PARENT") {
         window.location.href = "/parent";
