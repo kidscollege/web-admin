@@ -13,6 +13,7 @@ const links = [
   { name: "Results", href: "/principal/results" },
   { name: "Attendance", href: "/principal/attendance" },
   { name: "Admissions", href: "/principal/admissions" },
+  { name: "Change Password", href: "/principal/change-password" },
 ];
 
 export default function PrincipalLayout({

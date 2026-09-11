@@ -10,6 +10,7 @@ const links = [
   { name: "Dashboard", href: "/bursary" },
   { name: "Invoices", href: "/bursary/invoices" },
   { name: "Payments", href: "/bursary/payments" },
+  { name: "Change Password", href: "/bursary/change-password" },
 ];
 
 export default function BursaryLayout({

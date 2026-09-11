@@ -9,6 +9,7 @@ const links = [
   { name: "Dashboard", href: "/teacher" },
   { name: "Attendance", href: "/teacher/attendance" },
   { name: "Results", href: "/teacher/results" },
+  { name: "Change Password", href: "/teacher/change-password" },
 ];
 
 export default function TeacherLayout({

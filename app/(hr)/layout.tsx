@@ -9,6 +9,7 @@ import { getToken, removeToken } from "@/lib/auth";
 const links = [
   { name: "Dashboard", href: "/hr" },
   { name: "Staff", href: "/hr/staff" },
+  { name: "Change Password", href: "/hr/change-password" },
 ];
 
 export default function HrLayout({ children }: { children: React.ReactNode }) {
