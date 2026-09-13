@@ -41,17 +41,7 @@ const [assignForm, setAssignForm] = useState({
   teacherId: "",
 });
 const [savingAssign, setSavingAssign] = useState(false);
-const [timetableEntries, setTimetableEntries] = useState<any[]>([
-    {
-      id: "sample-1",
-      classId: "",
-      subjectId: "",
-      teacherId: "",
-      day: "Monday",
-      period: "08:00 - 09:00",
-      room: "Room 1",
-    },
-  ]);
+const [timetableEntries, setTimetableEntries] = useState<any[]>([]);
 const [timetableForm, setTimetableForm] = useState({
   classId: "",
   subjectId: "",
@@ -92,12 +82,14 @@ const [savingTerm, setSavingTerm] = useState(false);
       subjectsRes,
       termsRes,
       assignRes,
+      timetableRes,
     ] = await Promise.all([
       api.get("/academics/sessions"),
       api.get("/academics/classes"),
       api.get("/academics/subjects"),
       api.get("/academics/terms"),
       api.get("/academics/class-subjects"),
+      api.get("/academics/timetable"),
     ]);
 
     setSessions(sessionsRes.data || []);
@@ -105,6 +97,7 @@ const [savingTerm, setSavingTerm] = useState(false);
     setSubjects(subjectsRes.data || []);
     setTerms(termsRes.data || []);
     setClassSubjects(assignRes.data || []);
+    setTimetableEntries(timetableRes.data || []);
 
     // Staff is separate so a missing /hr/staff endpoint
     // doesn't break the entire Academics page.
@@ -351,7 +344,7 @@ const handleAssignTeacher = async (e: React.FormEvent) => {
     "14:00 - 15:00",
   ];
 
-  const handleAddTimetableEntry = (e: React.FormEvent) => {
+  const handleAddTimetableEntry = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!timetableForm.classId || !timetableForm.subjectId || !timetableForm.teacherId) {
@@ -359,41 +352,40 @@ const handleAssignTeacher = async (e: React.FormEvent) => {
       return;
     }
 
-    setTimetableEntries((prev) => [
-      ...prev.filter((entry) => !(entry.classId === timetableForm.classId && entry.day === timetableForm.day && entry.period === timetableForm.period)),
-      {
-        id: `${timetableForm.classId}-${timetableForm.day}-${timetableForm.period}`,
-        ...timetableForm,
-      },
-    ]);
+    const selectedClass = classes.find((item: any) => item.id === timetableForm.classId);
+    const [startTime, endTime] = timetableForm.period.split(" - ");
+    const dayOfWeek = timetableDays.indexOf(timetableForm.day) + 1;
 
-    setTimetableForm({
-      classId: "",
-      subjectId: "",
-      teacherId: "",
-      day: "Monday",
-      period: "08:00 - 09:00",
-      room: "",
-    });
+    try {
+      await api.post("/academics/timetable", {
+        sessionId: selectedClass?.sessionId,
+        classId: timetableForm.classId,
+        subjectId: timetableForm.subjectId,
+        teacherId: timetableForm.teacherId,
+        dayOfWeek,
+        startTime,
+        endTime,
+        room: timetableForm.room || undefined,
+      });
+      alert("Timetable entry saved");
+      const timetableRes = await api.get("/academics/timetable");
+      setTimetableEntries(timetableRes.data || []);
+      setTimetableForm({ classId: "", subjectId: "", teacherId: "", day: "Monday", period: "08:00 - 09:00", room: "" });
+    } catch (err: any) {
+      alert(err.response?.data?.message || "Failed to save timetable entry");
+    }
   };
 
-  const handleGenerateSampleTimetable = () => {
-    if (!classSubjects.length) {
-      alert("Create class-subject assignments first so the timetable can use them.");
-      return;
+  const handlePublishTimetableEntry = async (entry: any) => {
+    try {
+      await api.patch(`/academics/timetable/${entry.id}/publish`, {
+        isPublished: !entry.isPublished,
+      });
+      const timetableRes = await api.get("/academics/timetable");
+      setTimetableEntries(timetableRes.data || []);
+    } catch (err: any) {
+      alert(err.response?.data?.message || "Failed to update timetable publication");
     }
-
-    const generated = classSubjects.slice(0, 8).map((item: any, index: number) => ({
-      id: `sample-${item.id}`,
-      classId: item.classId,
-      subjectId: item.subjectId,
-      teacherId: item.teacherId || staffList[0]?.id || "",
-      day: timetableDays[index % timetableDays.length],
-      period: timetablePeriods[index % timetablePeriods.length],
-      room: `Room ${index + 1}`,
-    }));
-
-    setTimetableEntries(generated);
   };
 
   return (
@@ -693,13 +685,6 @@ const handleAssignTeacher = async (e: React.FormEvent) => {
     <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
         <h3 className="text-lg font-semibold text-gray-800">Class Timetable</h3>
-        <button
-          type="button"
-          onClick={handleGenerateSampleTimetable}
-          className="border border-blue-600 text-blue-600 px-3 py-2 rounded-lg text-sm font-medium"
-        >
-          Generate Sample
-        </button>
       </div>
 
       <form onSubmit={handleAddTimetableEntry} className="grid grid-cols-1 md:grid-cols-6 gap-3 mb-5">
@@ -796,9 +781,16 @@ const handleAssignTeacher = async (e: React.FormEvent) => {
                       return (
                         <div key={entry.id} className="bg-gray-50 border border-gray-100 rounded-lg p-3 text-sm">
                           <p className="font-medium text-gray-800">{subject?.name || "Subject"}</p>
-                          <p className="text-gray-600">{entry.day} · {entry.period}</p>
+                          <p className="text-gray-600">{entry.day || timetableDays[entry.dayOfWeek - 1]} · {entry.period || `${entry.startTime} - ${entry.endTime}`}</p>
                           <p className="text-gray-600">Teacher: {teacher ? `${teacher.firstName} ${teacher.lastName}` : "Unassigned"}</p>
                           <p className="text-gray-600">Room: {entry.room || "—"}</p>
+                          <button
+                            type="button"
+                            onClick={() => handlePublishTimetableEntry(entry)}
+                            className={`mt-2 rounded px-2 py-1 text-xs font-medium ${entry.isPublished ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}
+                          >
+                            {entry.isPublished ? "Unpublish" : "Publish"}
+                          </button>
                         </div>
                       );
                     })}

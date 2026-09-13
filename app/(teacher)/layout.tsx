@@ -9,6 +9,7 @@ const links = [
   { name: "Dashboard", href: "/teacher" },
   { name: "Attendance", href: "/teacher/attendance" },
   { name: "Results", href: "/teacher/results" },
+  { name: "Timetable", href: "/teacher/timetable" },
   { name: "Change Password", href: "/teacher/change-password" },
 ];
 
