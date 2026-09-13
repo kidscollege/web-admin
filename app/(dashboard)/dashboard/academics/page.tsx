@@ -8,7 +8,7 @@ import { getToken, removeToken } from "@/lib/auth";
 export default function AcademicsPage() {
   const router = useRouter();
 const [activeTab, setActiveTab] = useState<
-  "sessions" | "terms" | "classes" | "subjects" | "assignments"
+  "sessions" | "terms" | "classes" | "subjects" | "assignments" | "timetable"
 >("sessions");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -41,6 +41,25 @@ const [assignForm, setAssignForm] = useState({
   teacherId: "",
 });
 const [savingAssign, setSavingAssign] = useState(false);
+const [timetableEntries, setTimetableEntries] = useState<any[]>([
+    {
+      id: "sample-1",
+      classId: "",
+      subjectId: "",
+      teacherId: "",
+      day: "Monday",
+      period: "08:00 - 09:00",
+      room: "Room 1",
+    },
+  ]);
+const [timetableForm, setTimetableForm] = useState({
+  classId: "",
+  subjectId: "",
+  teacherId: "",
+  day: "Monday",
+  period: "08:00 - 09:00",
+  room: "",
+});
 
   const [classForm, setClassForm] = useState({
     sessionId: "",
@@ -319,7 +338,63 @@ const handleAssignTeacher = async (e: React.FormEvent) => {
   { key: "classes", label: "Classes" },
   { key: "subjects", label: "Subjects" },
   { key: "assignments", label: "Assignments" },
+  { key: "timetable", label: "Timetable" },
 ] as const;
+
+  const timetableDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
+  const timetablePeriods = [
+    "08:00 - 09:00",
+    "09:00 - 10:00",
+    "10:00 - 11:00",
+    "11:30 - 12:30",
+    "13:00 - 14:00",
+    "14:00 - 15:00",
+  ];
+
+  const handleAddTimetableEntry = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!timetableForm.classId || !timetableForm.subjectId || !timetableForm.teacherId) {
+      alert("Select a class, subject, and teacher before saving the timetable entry.");
+      return;
+    }
+
+    setTimetableEntries((prev) => [
+      ...prev.filter((entry) => !(entry.classId === timetableForm.classId && entry.day === timetableForm.day && entry.period === timetableForm.period)),
+      {
+        id: `${timetableForm.classId}-${timetableForm.day}-${timetableForm.period}`,
+        ...timetableForm,
+      },
+    ]);
+
+    setTimetableForm({
+      classId: "",
+      subjectId: "",
+      teacherId: "",
+      day: "Monday",
+      period: "08:00 - 09:00",
+      room: "",
+    });
+  };
+
+  const handleGenerateSampleTimetable = () => {
+    if (!classSubjects.length) {
+      alert("Create class-subject assignments first so the timetable can use them.");
+      return;
+    }
+
+    const generated = classSubjects.slice(0, 8).map((item: any, index: number) => ({
+      id: `sample-${item.id}`,
+      classId: item.classId,
+      subjectId: item.subjectId,
+      teacherId: item.teacherId || staffList[0]?.id || "",
+      day: timetableDays[index % timetableDays.length],
+      period: timetablePeriods[index % timetablePeriods.length],
+      room: `Room ${index + 1}`,
+    }));
+
+    setTimetableEntries(generated);
+  };
 
   return (
     <div>
@@ -612,6 +687,131 @@ const handleAssignTeacher = async (e: React.FormEvent) => {
               </div>
             </div>
           )}
+
+          {activeTab === "timetable" && (
+  <div className="space-y-6">
+    <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+        <h3 className="text-lg font-semibold text-gray-800">Class Timetable</h3>
+        <button
+          type="button"
+          onClick={handleGenerateSampleTimetable}
+          className="border border-blue-600 text-blue-600 px-3 py-2 rounded-lg text-sm font-medium"
+        >
+          Generate Sample
+        </button>
+      </div>
+
+      <form onSubmit={handleAddTimetableEntry} className="grid grid-cols-1 md:grid-cols-6 gap-3 mb-5">
+        <select
+          value={timetableForm.classId}
+          onChange={(e) => setTimetableForm({ ...timetableForm, classId: e.target.value })}
+          className="border border-gray-300 rounded-lg px-3 py-2.5 text-sm"
+        >
+          <option value="">Class</option>
+          {classes.map((c: any) => (
+            <option key={c.id} value={c.id}>{c.name}</option>
+          ))}
+        </select>
+
+        <select
+          value={timetableForm.subjectId}
+          onChange={(e) => setTimetableForm({ ...timetableForm, subjectId: e.target.value })}
+          className="border border-gray-300 rounded-lg px-3 py-2.5 text-sm"
+        >
+          <option value="">Subject</option>
+          {subjects.map((s: any) => (
+            <option key={s.id} value={s.id}>{s.name}</option>
+          ))}
+        </select>
+
+        <select
+          value={timetableForm.teacherId}
+          onChange={(e) => setTimetableForm({ ...timetableForm, teacherId: e.target.value })}
+          className="border border-gray-300 rounded-lg px-3 py-2.5 text-sm"
+        >
+          <option value="">Teacher</option>
+          {staffList.map((t: any) => (
+            <option key={t.id} value={t.id}>{t.firstName} {t.lastName}</option>
+          ))}
+        </select>
+
+        <select
+          value={timetableForm.day}
+          onChange={(e) => setTimetableForm({ ...timetableForm, day: e.target.value })}
+          className="border border-gray-300 rounded-lg px-3 py-2.5 text-sm"
+        >
+          {timetableDays.map((day) => (
+            <option key={day} value={day}>{day}</option>
+          ))}
+        </select>
+
+        <select
+          value={timetableForm.period}
+          onChange={(e) => setTimetableForm({ ...timetableForm, period: e.target.value })}
+          className="border border-gray-300 rounded-lg px-3 py-2.5 text-sm"
+        >
+          {timetablePeriods.map((period) => (
+            <option key={period} value={period}>{period}</option>
+          ))}
+        </select>
+
+        <input
+          value={timetableForm.room}
+          onChange={(e) => setTimetableForm({ ...timetableForm, room: e.target.value })}
+          placeholder="Room"
+          className="border border-gray-300 rounded-lg px-3 py-2.5 text-sm"
+        />
+
+        <button
+          type="submit"
+          className="md:col-span-6 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium py-2.5"
+        >
+          Save Timetable Entry
+        </button>
+      </form>
+    </div>
+
+    <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+      <h3 className="text-lg font-semibold text-gray-800 mb-4">Weekly Schedule</h3>
+
+      {classes.length === 0 ? (
+        <p className="text-sm text-gray-500">Create classes first to start building a timetable.</p>
+      ) : (
+        <div className="space-y-4">
+          {classes.map((cls: any) => {
+            const entries = timetableEntries.filter((entry) => entry.classId === cls.id);
+
+            return (
+              <div key={cls.id} className="border border-gray-100 rounded-xl p-4">
+                <h4 className="font-semibold text-gray-800 mb-3">{cls.name}</h4>
+                {entries.length === 0 ? (
+                  <p className="text-sm text-gray-500">No timetable entries for this class yet.</p>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+                    {entries.map((entry: any) => {
+                      const subject = subjects.find((s: any) => s.id === entry.subjectId);
+                      const teacher = staffList.find((t: any) => t.id === entry.teacherId);
+
+                      return (
+                        <div key={entry.id} className="bg-gray-50 border border-gray-100 rounded-lg p-3 text-sm">
+                          <p className="font-medium text-gray-800">{subject?.name || "Subject"}</p>
+                          <p className="text-gray-600">{entry.day} · {entry.period}</p>
+                          <p className="text-gray-600">Teacher: {teacher ? `${teacher.firstName} ${teacher.lastName}` : "Unassigned"}</p>
+                          <p className="text-gray-600">Room: {entry.room || "—"}</p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  </div>
+)}
 
           {activeTab === "assignments" && (
   <div className="space-y-6">

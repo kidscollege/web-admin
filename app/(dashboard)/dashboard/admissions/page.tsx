@@ -15,6 +15,7 @@ export default function AdmissionsPage() {
   const [showModal, setShowModal] = useState(false);
   const [selectedApp, setSelectedApp] = useState<any>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [interviewDate, setInterviewDate] = useState("");
   const [credentials, setCredentials] = useState<{
     title: string;
     email: string;
@@ -101,14 +102,43 @@ export default function AdmissionsPage() {
   }
 };
 
+  const handleStage = async (status: string) => {
+    if (!selectedApp) return;
+    if (status === "INTERVIEW_SCHEDULED" && !interviewDate) {
+      alert("Select an interview date first");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await api.patch(`/admissions/applications/${selectedApp.id}/stage`, {
+        status,
+        ...(status === "INTERVIEW_SCHEDULED" ? { interviewDate } : {}),
+      });
+      setInterviewDate("");
+      setShowModal(false);
+      setSelectedApp(null);
+      fetchData();
+    } catch (err: any) {
+      alert(err.response?.data?.message || "Failed to update application stage");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "SUBMITTED":
         return "bg-blue-100 text-blue-700";
       case "UNDER_REVIEW":
         return "bg-amber-100 text-amber-700";
+      case "INTERVIEW_SCHEDULED":
+        return "bg-orange-100 text-orange-700";
       case "APPROVED":
         return "bg-green-100 text-green-700";
+      case "OFFER_SENT":
+        return "bg-cyan-100 text-cyan-700";
+      case "ACCEPTED":
+        return "bg-teal-100 text-teal-700";
       case "ADMITTED":
         return "bg-emerald-100 text-emerald-700";
       case "REJECTED":
@@ -135,7 +165,10 @@ export default function AdmissionsPage() {
             { label: "Total", value: stats.total },
             { label: "Submitted", value: stats.submitted },
             { label: "Under Review", value: stats.underReview },
+            { label: "Interviews", value: stats.interviewScheduled },
             { label: "Approved", value: stats.approved },
+            { label: "Offers", value: stats.offerSent },
+            { label: "Accepted", value: stats.accepted },
             { label: "Admitted", value: stats.admitted },
             { label: "Rejected", value: stats.rejected },
           ].map((item) => (
@@ -156,7 +189,10 @@ export default function AdmissionsPage() {
           { value: "", label: "All" },
           { value: "SUBMITTED", label: "Submitted" },
           { value: "UNDER_REVIEW", label: "Under Review" },
+          { value: "INTERVIEW_SCHEDULED", label: "Interview" },
           { value: "APPROVED", label: "Approved" },
+          { value: "OFFER_SENT", label: "Offer Sent" },
+          { value: "ACCEPTED", label: "Accepted" },
           { value: "ADMITTED", label: "Admitted" },
           { value: "REJECTED", label: "Rejected" },
         ].map((filter) => (
@@ -376,9 +412,21 @@ export default function AdmissionsPage() {
                           Mark Under Review
                         </button>
                       )}
-                      {(selectedApp.status === "SUBMITTED" ||
-                        selectedApp.status === "UNDER_REVIEW") && (
+                      {selectedApp.status === "UNDER_REVIEW" && (
                         <>
+                          <input
+                            type="datetime-local"
+                            value={interviewDate}
+                            onChange={(event) => setInterviewDate(event.target.value)}
+                            className="col-span-2 rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                          />
+                          <button
+                            onClick={() => handleStage("INTERVIEW_SCHEDULED")}
+                            disabled={submitting}
+                            className="bg-orange-500 hover:bg-orange-600 text-white py-2.5 rounded-lg text-sm font-medium disabled:opacity-50"
+                          >
+                            Schedule Interview
+                          </button>
                           <button
                             onClick={() => handleReview("APPROVED")}
                             disabled={submitting}
@@ -395,7 +443,34 @@ export default function AdmissionsPage() {
                           </button>
                         </>
                       )}
+                      {selectedApp.status === "INTERVIEW_SCHEDULED" && (
+                        <button
+                          onClick={() => handleStage("APPROVED")}
+                          disabled={submitting}
+                          className="col-span-2 bg-green-600 hover:bg-green-700 text-white py-2.5 rounded-lg text-sm font-medium disabled:opacity-50"
+                        >
+                          Approve Interview
+                        </button>
+                      )}
                       {selectedApp.status === "APPROVED" && (
+                        <button
+                          onClick={() => handleStage("OFFER_SENT")}
+                          disabled={submitting}
+                          className="col-span-2 bg-cyan-600 hover:bg-cyan-700 text-white py-2.5 rounded-lg text-sm font-medium disabled:opacity-50"
+                        >
+                          Send Admission Offer
+                        </button>
+                      )}
+                      {selectedApp.status === "OFFER_SENT" && (
+                        <button
+                          onClick={() => handleStage("ACCEPTED")}
+                          disabled={submitting}
+                          className="col-span-2 bg-teal-600 hover:bg-teal-700 text-white py-2.5 rounded-lg text-sm font-medium disabled:opacity-50"
+                        >
+                          Mark Offer Accepted
+                        </button>
+                      )}
+                      {(selectedApp.status === "APPROVED" || selectedApp.status === "ACCEPTED") && (
                         <button
                           onClick={handleAdmit}
                           disabled={submitting}
@@ -440,6 +515,14 @@ export default function AdmissionsPage() {
               </tr>
               <tr className="border-t border-blue-100">
                 <td className="py-2 pr-4 font-medium">APPROVED</td>
+                <td className="py-2">Send Offer or Admit Student</td>
+              </tr>
+              <tr className="border-t border-blue-100">
+                <td className="py-2 pr-4 font-medium">OFFER_SENT</td>
+                <td className="py-2">Mark Offer Accepted</td>
+              </tr>
+              <tr className="border-t border-blue-100">
+                <td className="py-2 pr-4 font-medium">ACCEPTED</td>
                 <td className="py-2">Admit Student</td>
               </tr>
               <tr className="border-t border-blue-100">
