@@ -41,7 +41,9 @@ const [reportLoading, setReportLoading] = useState(false);
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
   const [showStructureModal, setShowStructureModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [showPlanModal, setShowPlanModal] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<any>(null);
+  const [paymentPlans, setPaymentPlans] = useState<any[]>([]);
   const [editingStructure, setEditingStructure] = useState<any | null>(null);
 
   const [invoiceForm, setInvoiceForm] = useState({
@@ -60,6 +62,10 @@ const [reportLoading, setReportLoading] = useState(false);
     amount: "",
     method: "CASH",
     notes: "",
+  });
+  const [paymentPlanForm, setPaymentPlanForm] = useState({
+    installmentCount: "3",
+    firstDueDate: "",
   });
   const [feePlanForm, setFeePlanForm] = useState({
     studentId: "",
@@ -325,6 +331,42 @@ const handleReportSearch = async () => {
     }
   };
 
+  const openPaymentPlanModal = async (invoice: any) => {
+    setSelectedInvoice(invoice);
+    setPaymentPlanForm({ installmentCount: "3", firstDueDate: "" });
+    try {
+      const res = await api.get("/finance/payment-plans", { params: { invoiceId: invoice.id } });
+      setPaymentPlans(res.data || []);
+    } catch {
+      setPaymentPlans([]);
+    }
+    setShowPlanModal(true);
+  };
+
+  const handleCreatePaymentPlan = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedInvoice || !paymentPlanForm.firstDueDate) {
+      alert("Select the first installment due date");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await api.post("/finance/payment-plans", {
+        invoiceId: selectedInvoice.id,
+        installmentCount: Number(paymentPlanForm.installmentCount),
+        firstDueDate: paymentPlanForm.firstDueDate,
+      });
+      alert("Payment plan created");
+      setShowPlanModal(false);
+      setSelectedInvoice(null);
+      fetchData();
+    } catch (err: any) {
+      alert(err.response?.data?.message || "Failed to create payment plan");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "PAID":
@@ -457,20 +499,17 @@ const handleReportSearch = async () => {
                             </td>
                             <td className="px-6 py-4">
                               {invoice.status !== "PAID" && (
-                                <button
-                                  onClick={() => {
-                                    setSelectedInvoice(invoice);
-                                    setPaymentForm({
-                                      amount: String(invoice.balance),
-                                      method: "CASH",
-                                      notes: "",
-                                    });
-                                    setShowPaymentModal(true);
-                                  }}
-                                  className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-                                >
-                                  Record Payment
-                                </button>
+                                <div className="flex gap-3">
+                                  <button
+                                    onClick={() => {
+                                      setSelectedInvoice(invoice);
+                                      setPaymentForm({ amount: String(invoice.balance), method: "CASH", notes: "" });
+                                      setShowPaymentModal(true);
+                                    }}
+                                    className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                                  >Record Payment</button>
+                                  <button onClick={() => openPaymentPlanModal(invoice)} className="text-emerald-600 hover:text-emerald-800 text-sm font-medium">Payment Plan</button>
+                                </div>
                               )}
                             </td>
                           </tr>
@@ -524,20 +563,10 @@ const handleReportSearch = async () => {
                         </p>
                       </div>
                       {invoice.status !== "PAID" && (
-                        <button
-                          onClick={() => {
-                            setSelectedInvoice(invoice);
-                            setPaymentForm({
-                              amount: String(invoice.balance),
-                              method: "CASH",
-                              notes: "",
-                            });
-                            setShowPaymentModal(true);
-                          }}
-                          className="w-full bg-blue-600 text-white py-2 rounded-lg text-sm font-medium"
-                        >
-                          Record Payment
-                        </button>
+                        <div className="grid grid-cols-2 gap-2">
+                          <button onClick={() => { setSelectedInvoice(invoice); setPaymentForm({ amount: String(invoice.balance), method: "CASH", notes: "" }); setShowPaymentModal(true); }} className="w-full rounded-lg bg-blue-600 py-2 text-sm font-medium text-white">Record Payment</button>
+                          <button onClick={() => openPaymentPlanModal(invoice)} className="w-full rounded-lg bg-emerald-600 py-2 text-sm font-medium text-white">Payment Plan</button>
+                        </div>
                       )}
                     </div>
                   ))
@@ -1019,6 +1048,41 @@ const handleReportSearch = async () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {showPlanModal && selectedInvoice && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-0 sm:items-center sm:p-4">
+          <div className="w-full max-w-md rounded-t-2xl bg-white p-5 sm:rounded-xl">
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-lg font-semibold">Payment Plan</h3>
+              <button onClick={() => { setShowPlanModal(false); setSelectedInvoice(null); }} className="text-gray-400 text-xl">✕</button>
+            </div>
+            {paymentPlans.length > 0 ? (
+              <div className="space-y-2">
+                <p className="text-sm text-gray-500">This invoice already has a payment plan.</p>
+                {paymentPlans[0].installments?.map((installment: any) => (
+                  <div key={installment.id} className="flex justify-between rounded-lg bg-gray-50 p-3 text-sm">
+                    <span>Installment {installment.installmentNo} · {new Date(installment.dueDate).toLocaleDateString()}</span>
+                    <strong>₦{Number(installment.amount).toLocaleString()}</strong>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <form onSubmit={handleCreatePaymentPlan} className="space-y-4">
+                <p className="rounded-lg bg-gray-50 p-3 text-sm">Balance: ₦{Number(selectedInvoice.balance).toLocaleString()}</p>
+                <div>
+                  <label className="mb-1 block text-sm font-medium">Number of installments</label>
+                  <input type="number" min="2" max="24" required value={paymentPlanForm.installmentCount} onChange={(e) => setPaymentPlanForm({ ...paymentPlanForm, installmentCount: e.target.value })} className="w-full rounded-lg border px-3 py-2.5 text-sm" />
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm font-medium">First due date</label>
+                  <input type="date" required value={paymentPlanForm.firstDueDate} onChange={(e) => setPaymentPlanForm({ ...paymentPlanForm, firstDueDate: e.target.value })} className="w-full rounded-lg border px-3 py-2.5 text-sm" />
+                </div>
+                <button disabled={submitting} className="w-full rounded-lg bg-emerald-600 py-2.5 text-sm font-medium text-white disabled:opacity-50">{submitting ? "Creating..." : "Create payment plan"}</button>
+              </form>
+            )}
           </div>
         </div>
       )}
