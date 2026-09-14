@@ -8,7 +8,7 @@ import { getToken, removeToken } from "@/lib/auth";
 export default function FinancePage() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<
-    "invoices" | "structures" | "reports"
+    "invoices" | "structures" | "feePlans" | "reports"
   >("invoices");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -18,6 +18,8 @@ export default function FinancePage() {
   const [students, setStudents] = useState<any[]>([]);
   const [reportByTerm, setReportByTerm] = useState<any[]>([]);
   const [reportByClass, setReportByClass] = useState<any[]>([]);
+  const [feePlans, setFeePlans] = useState<any[]>([]);
+  const [reconciliation, setReconciliation] = useState<any[]>([]);
 
  
 
@@ -58,6 +60,14 @@ const [reportLoading, setReportLoading] = useState(false);
     amount: "",
     method: "CASH",
     notes: "",
+  });
+  const [feePlanForm, setFeePlanForm] = useState({
+    studentId: "",
+    sessionId: "",
+    termId: "",
+    feeStructureIds: [] as string[],
+    discount: "",
+    dueDate: "",
   });
 
   const fetchData = async () => {
@@ -131,6 +141,15 @@ const handleReportSearch = async () => {
     }
   };
 
+  const fetchFeePlans = async () => {
+    try {
+      const res = await api.get("/finance/fee-plans");
+      setFeePlans(res.data || []);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   useEffect(() => {
     const token = getToken();
     if (!token) {
@@ -144,7 +163,62 @@ const handleReportSearch = async () => {
     if (activeTab === "reports") {
       fetchReports();
     }
+    if (activeTab === "feePlans") {
+      fetchFeePlans();
+    }
   }, [activeTab]);
+
+  const handleMarkOverdue = async () => {
+    try {
+      const res = await api.post("/finance/invoices/mark-overdue");
+      alert(`${res.data?.updated || 0} invoice(s) marked overdue`);
+      fetchData();
+    } catch (err: any) {
+      alert(err.response?.data?.message || "Failed to mark invoices overdue");
+    }
+  };
+
+  const handleReconciliation = async () => {
+    try {
+      const res = await api.get("/finance/reports/reconciliation");
+      setReconciliation(res.data || []);
+    } catch (err: any) {
+      alert(err.response?.data?.message || "Failed to load reconciliation report");
+    }
+  };
+
+  const handleCreateFeePlan = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!feePlanForm.studentId || !feePlanForm.sessionId || !feePlanForm.feeStructureIds.length) {
+      alert("Select a student, session, and at least one fee structure");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await api.post("/finance/fee-plans", {
+        ...feePlanForm,
+        discount: Number(feePlanForm.discount || 0),
+        dueDate: feePlanForm.dueDate || undefined,
+      });
+      setFeePlanForm({ studentId: "", sessionId: "", termId: "", feeStructureIds: [], discount: "", dueDate: "" });
+      fetchFeePlans();
+    } catch (err: any) {
+      alert(err.response?.data?.message || "Failed to create fee plan");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleInvoiceFeePlan = async (plan: any) => {
+    try {
+      await api.post(`/finance/fee-plans/${plan.id}/invoice`, { dueDate: plan.dueDate || undefined });
+      alert("Invoice generated from fee plan");
+      fetchData();
+      fetchFeePlans();
+    } catch (err: any) {
+      alert(err.response?.data?.message || "Failed to generate invoice");
+    }
+  };
 
   // ===== FEE STRUCTURE =====
   const openStructureModal = (item?: any) => {
@@ -269,6 +343,7 @@ const handleReportSearch = async () => {
   const tabs = [
     { key: "invoices", label: "Invoices" },
     { key: "structures", label: "Fee Structures" },
+    { key: "feePlans", label: "Fee Plans" },
     { key: "reports", label: "Reports" },
   ] as const;
 
@@ -527,6 +602,10 @@ const handleReportSearch = async () => {
           {/* ================= REPORTS ================= */}
       {activeTab === "reports" && (
   <div className="space-y-6">
+    <div className="flex flex-wrap gap-3">
+      <button onClick={handleMarkOverdue} className="rounded-lg bg-amber-600 px-4 py-2 text-sm font-medium text-white">Mark overdue invoices</button>
+      <button onClick={handleReconciliation} className="rounded-lg border border-blue-600 px-4 py-2 text-sm font-medium text-blue-600">Load reconciliation</button>
+    </div>
     {/* Filters */}
     <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-5 shadow-sm">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -629,8 +708,30 @@ const handleReportSearch = async () => {
         <li>Select a <strong>Session</strong> only → full session total</li>
       </ul>
     </div>
+    {reconciliation.length > 0 && (
+      <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white">
+        <table className="w-full text-sm">
+          <thead className="border-b bg-gray-50"><tr><th className="px-4 py-3 text-left">Invoice</th><th className="px-4 py-3 text-left">Student</th><th className="px-4 py-3 text-left">Difference</th><th className="px-4 py-3 text-left">Status</th></tr></thead>
+          <tbody>{reconciliation.map((row) => <tr key={row.invoiceId} className="border-b"><td className="px-4 py-3">{row.invoiceNumber}</td><td className="px-4 py-3">{row.student?.firstName} {row.student?.lastName}</td><td className="px-4 py-3">₦{Number(row.difference).toLocaleString()}</td><td className="px-4 py-3">{row.isBalanced ? "Balanced" : "Review required"}</td></tr>)}</tbody>
+        </table>
+      </div>
+    )}
   </div>
 )}
+
+          {activeTab === "feePlans" && (
+            <div className="space-y-6">
+              <form onSubmit={handleCreateFeePlan} className="grid grid-cols-1 gap-3 rounded-xl border border-gray-200 bg-white p-5 md:grid-cols-2 lg:grid-cols-4">
+                <select required value={feePlanForm.studentId} onChange={(e) => setFeePlanForm({ ...feePlanForm, studentId: e.target.value })} className="rounded-lg border px-3 py-2.5 text-sm"><option value="">Student</option>{students.map((s) => <option key={s.id} value={s.id}>{s.firstName} {s.lastName}</option>)}</select>
+                <select required value={feePlanForm.sessionId} onChange={(e) => setFeePlanForm({ ...feePlanForm, sessionId: e.target.value })} className="rounded-lg border px-3 py-2.5 text-sm"><option value="">Session</option>{sessions.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</select>
+                <select value={feePlanForm.termId} onChange={(e) => setFeePlanForm({ ...feePlanForm, termId: e.target.value })} className="rounded-lg border px-3 py-2.5 text-sm"><option value="">Term optional</option>{terms.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}</select>
+                <input type="number" min="0" placeholder="Discount" value={feePlanForm.discount} onChange={(e) => setFeePlanForm({ ...feePlanForm, discount: e.target.value })} className="rounded-lg border px-3 py-2.5 text-sm" />
+                <div className="flex flex-wrap gap-2 lg:col-span-3">{feeStructures.map((item) => <label key={item.id} className="flex items-center gap-2 rounded-lg border px-3 py-2 text-sm"><input type="checkbox" checked={feePlanForm.feeStructureIds.includes(item.id)} onChange={(e) => setFeePlanForm({ ...feePlanForm, feeStructureIds: e.target.checked ? [...feePlanForm.feeStructureIds, item.id] : feePlanForm.feeStructureIds.filter((id) => id !== item.id) })} />{item.name} (₦{Number(item.amount).toLocaleString()})</label>)}</div>
+                <button disabled={submitting} className="rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white disabled:opacity-50">{submitting ? "Saving..." : "Create fee plan"}</button>
+              </form>
+              <div className="space-y-3">{feePlans.map((plan) => <div key={plan.id} className="flex flex-col gap-3 rounded-xl border border-gray-200 bg-white p-4 sm:flex-row sm:items-center sm:justify-between"><div><p className="font-semibold">{plan.student?.firstName} {plan.student?.lastName}</p><p className="text-sm text-gray-500">{plan.items?.length || 0} fee items · Discount ₦{Number(plan.discount).toLocaleString()} · {plan.status}</p></div><button onClick={() => handleInvoiceFeePlan(plan)} className="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium text-white">Generate invoice</button></div>)}</div>
+            </div>
+          )}
         </>
       )}
 
