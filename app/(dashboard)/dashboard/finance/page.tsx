@@ -20,6 +20,9 @@ export default function FinancePage() {
   const [reportByClass, setReportByClass] = useState<any[]>([]);
   const [feePlans, setFeePlans] = useState<any[]>([]);
   const [reconciliation, setReconciliation] = useState<any[]>([]);
+  const [paymentPlanSummary, setPaymentPlanSummary] = useState<any>(null);
+  const [statementStudentId, setStatementStudentId] = useState("");
+  const [studentStatement, setStudentStatement] = useState<any>(null);
 
  
 
@@ -190,6 +193,28 @@ const handleReportSearch = async () => {
       setReconciliation(res.data || []);
     } catch (err: any) {
       alert(err.response?.data?.message || "Failed to load reconciliation report");
+    }
+  };
+
+  const handlePaymentPlanSummary = async () => {
+    try {
+      const res = await api.get("/finance/reports/payment-plans");
+      setPaymentPlanSummary(res.data);
+    } catch (err: any) {
+      alert(err.response?.data?.message || "Failed to load payment-plan report");
+    }
+  };
+
+  const handleStudentStatement = async () => {
+    if (!statementStudentId) {
+      alert("Select a student first");
+      return;
+    }
+    try {
+      const res = await api.get(`/finance/students/${statementStudentId}/statement`);
+      setStudentStatement(res.data);
+    } catch (err: any) {
+      alert(err.response?.data?.message || "Failed to load student statement");
     }
   };
 
@@ -634,6 +659,12 @@ const handleReportSearch = async () => {
     <div className="flex flex-wrap gap-3">
       <button onClick={handleMarkOverdue} className="rounded-lg bg-amber-600 px-4 py-2 text-sm font-medium text-white">Mark overdue invoices</button>
       <button onClick={handleReconciliation} className="rounded-lg border border-blue-600 px-4 py-2 text-sm font-medium text-blue-600">Load reconciliation</button>
+      <button onClick={handlePaymentPlanSummary} className="rounded-lg border border-emerald-600 px-4 py-2 text-sm font-medium text-emerald-600">Load payment-plan report</button>
+      <select value={statementStudentId} onChange={(e) => setStatementStudentId(e.target.value)} className="rounded-lg border border-gray-300 px-3 py-2 text-sm">
+        <option value="">Select student statement</option>
+        {students.map((student) => <option key={student.id} value={student.id}>{student.firstName} {student.lastName}</option>)}
+      </select>
+      <button onClick={handleStudentStatement} className="rounded-lg border border-gray-700 px-4 py-2 text-sm font-medium text-gray-700">Load statement</button>
     </div>
     {/* Filters */}
     <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-5 shadow-sm">
@@ -743,6 +774,43 @@ const handleReportSearch = async () => {
           <thead className="border-b bg-gray-50"><tr><th className="px-4 py-3 text-left">Invoice</th><th className="px-4 py-3 text-left">Student</th><th className="px-4 py-3 text-left">Difference</th><th className="px-4 py-3 text-left">Status</th></tr></thead>
           <tbody>{reconciliation.map((row) => <tr key={row.invoiceId} className="border-b"><td className="px-4 py-3">{row.invoiceNumber}</td><td className="px-4 py-3">{row.student?.firstName} {row.student?.lastName}</td><td className="px-4 py-3">₦{Number(row.difference).toLocaleString()}</td><td className="px-4 py-3">{row.isBalanced ? "Balanced" : "Review required"}</td></tr>)}</tbody>
         </table>
+      </div>
+    )}
+    {paymentPlanSummary && (
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+          <p className="text-sm text-gray-500">Scheduled installments</p>
+          <p className="mt-2 text-2xl font-bold">{paymentPlanSummary.totalCount}</p>
+        </div>
+        <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+          <p className="text-sm text-gray-500">Outstanding installments</p>
+          <p className="mt-2 text-2xl font-bold text-amber-600">₦{Number(paymentPlanSummary.outstandingAmount || 0).toLocaleString()}</p>
+        </div>
+        <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+          <p className="text-sm text-gray-500">Overdue installments</p>
+          <p className="mt-2 text-2xl font-bold text-red-600">{paymentPlanSummary.byStatus?.OVERDUE?.count || 0}</p>
+        </div>
+      </div>
+    )}
+    {studentStatement && (
+      <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+        <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h3 className="font-semibold text-gray-800">{studentStatement.student.firstName} {studentStatement.student.lastName}</h3>
+            <p className="text-sm text-gray-500">{studentStatement.student.admissionNumber}</p>
+          </div>
+          <div className="text-right text-sm">
+            <p>Invoiced: ₦{Number(studentStatement.totalInvoiced).toLocaleString()}</p>
+            <p>Paid: ₦{Number(studentStatement.totalPaid).toLocaleString()}</p>
+            <p className="font-semibold text-amber-700">Outstanding: ₦{Number(studentStatement.totalOutstanding).toLocaleString()}</p>
+          </div>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="border-b bg-gray-50"><tr><th className="px-3 py-2 text-left">Invoice</th><th className="px-3 py-2 text-left">Date</th><th className="px-3 py-2 text-left">Amount</th><th className="px-3 py-2 text-left">Paid</th><th className="px-3 py-2 text-left">Balance</th><th className="px-3 py-2 text-left">Status</th></tr></thead>
+            <tbody>{studentStatement.invoices.map((invoice: any) => <tr key={invoice.id} className="border-b"><td className="px-3 py-2">{invoice.invoiceNumber}</td><td className="px-3 py-2">{new Date(invoice.createdAt).toLocaleDateString()}</td><td className="px-3 py-2">₦{Number(invoice.totalAmount).toLocaleString()}</td><td className="px-3 py-2">₦{Number(invoice.amountPaid).toLocaleString()}</td><td className="px-3 py-2">₦{Number(invoice.balance).toLocaleString()}</td><td className="px-3 py-2">{invoice.status}</td></tr>)}</tbody>
+          </table>
+        </div>
       </div>
     )}
   </div>
