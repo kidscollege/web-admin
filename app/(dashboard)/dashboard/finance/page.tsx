@@ -23,6 +23,7 @@ export default function FinancePage() {
   const [paymentPlanSummary, setPaymentPlanSummary] = useState<any>(null);
   const [statementStudentId, setStatementStudentId] = useState("");
   const [studentStatement, setStudentStatement] = useState<any>(null);
+  const [refundReport, setRefundReport] = useState<any>(null);
 
  
 
@@ -218,6 +219,15 @@ const handleReportSearch = async () => {
     }
   };
 
+  const handleRefundReport = async () => {
+    try {
+      const res = await api.get("/finance/reports/refunds");
+      setRefundReport(res.data);
+    } catch (err: any) {
+      alert(err.response?.data?.message || "Failed to load refund report");
+    }
+  };
+
   const handleCreateFeePlan = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!feePlanForm.studentId || !feePlanForm.sessionId || !feePlanForm.feeStructureIds.length) {
@@ -248,6 +258,22 @@ const handleReportSearch = async () => {
       fetchFeePlans();
     } catch (err: any) {
       alert(err.response?.data?.message || "Failed to generate invoice");
+    }
+  };
+
+  const handleCreateFeeAdjustment = async (plan: any, type: "SCHOLARSHIP" | "WAIVER") => {
+    const amount = window.prompt(`${type === "SCHOLARSHIP" ? "Scholarship" : "Waiver"} amount`);
+    const reason = window.prompt("Reason for this adjustment");
+    if (!amount || !reason) return;
+    try {
+      await api.post(`/finance/fee-plans/${plan.id}/adjustments`, {
+        type,
+        amount: Number(amount),
+        reason,
+      });
+      fetchFeePlans();
+    } catch (err: any) {
+      alert(err.response?.data?.message || "Failed to create fee adjustment");
     }
   };
 
@@ -665,6 +691,7 @@ const handleReportSearch = async () => {
         {students.map((student) => <option key={student.id} value={student.id}>{student.firstName} {student.lastName}</option>)}
       </select>
       <button onClick={handleStudentStatement} className="rounded-lg border border-gray-700 px-4 py-2 text-sm font-medium text-gray-700">Load statement</button>
+      <button onClick={handleRefundReport} className="rounded-lg border border-red-600 px-4 py-2 text-sm font-medium text-red-600">Load refund report</button>
     </div>
     {/* Filters */}
     <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-5 shadow-sm">
@@ -813,6 +840,17 @@ const handleReportSearch = async () => {
         </div>
       </div>
     )}
+    {refundReport && (
+      <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+        <div className="mb-4 flex flex-wrap justify-between gap-3">
+          <h3 className="font-semibold text-gray-800">Refund report</h3>
+          <div className="text-sm"><span className="mr-4">Refunds: {refundReport.count}</span><strong className="text-red-600">Total: ₦{Number(refundReport.totalRefunded || 0).toLocaleString()}</strong></div>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm"><thead className="border-b bg-gray-50"><tr><th className="px-3 py-2 text-left">Invoice</th><th className="px-3 py-2 text-left">Student</th><th className="px-3 py-2 text-left">Amount</th><th className="px-3 py-2 text-left">Reason</th><th className="px-3 py-2 text-left">Date</th></tr></thead><tbody>{refundReport.refunds.map((refund: any) => <tr key={refund.id} className="border-b"><td className="px-3 py-2">{refund.invoice?.invoiceNumber}</td><td className="px-3 py-2">{refund.invoice?.student?.firstName} {refund.invoice?.student?.lastName}</td><td className="px-3 py-2">₦{Number(refund.amount).toLocaleString()}</td><td className="px-3 py-2">{refund.refundReason || "-"}</td><td className="px-3 py-2">{refund.refundedAt ? new Date(refund.refundedAt).toLocaleDateString() : "-"}</td></tr>)}</tbody></table>
+        </div>
+      </div>
+    )}
   </div>
 )}
 
@@ -826,7 +864,7 @@ const handleReportSearch = async () => {
                 <div className="flex flex-wrap gap-2 lg:col-span-3">{feeStructures.map((item) => <label key={item.id} className="flex items-center gap-2 rounded-lg border px-3 py-2 text-sm"><input type="checkbox" checked={feePlanForm.feeStructureIds.includes(item.id)} onChange={(e) => setFeePlanForm({ ...feePlanForm, feeStructureIds: e.target.checked ? [...feePlanForm.feeStructureIds, item.id] : feePlanForm.feeStructureIds.filter((id) => id !== item.id) })} />{item.name} (₦{Number(item.amount).toLocaleString()})</label>)}</div>
                 <button disabled={submitting} className="rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white disabled:opacity-50">{submitting ? "Saving..." : "Create fee plan"}</button>
               </form>
-              <div className="space-y-3">{feePlans.map((plan) => <div key={plan.id} className="flex flex-col gap-3 rounded-xl border border-gray-200 bg-white p-4 sm:flex-row sm:items-center sm:justify-between"><div><p className="font-semibold">{plan.student?.firstName} {plan.student?.lastName}</p><p className="text-sm text-gray-500">{plan.items?.length || 0} fee items · Discount ₦{Number(plan.discount).toLocaleString()} · {plan.status}</p></div><button onClick={() => handleInvoiceFeePlan(plan)} className="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium text-white">Generate invoice</button></div>)}</div>
+              <div className="space-y-3">{feePlans.map((plan) => <div key={plan.id} className="flex flex-col gap-3 rounded-xl border border-gray-200 bg-white p-4 sm:flex-row sm:items-center sm:justify-between"><div><p className="font-semibold">{plan.student?.firstName} {plan.student?.lastName}</p><p className="text-sm text-gray-500">{plan.items?.length || 0} fee items · Discount ₦{Number(plan.discount).toLocaleString()} · {plan.status}</p>{plan.adjustments?.length > 0 && <p className="text-xs text-gray-500">Adjustments: {plan.adjustments.map((adjustment: any) => `${adjustment.type} ₦${Number(adjustment.amount).toLocaleString()}`).join(", ")}</p>}</div><div className="flex flex-wrap gap-2"><button onClick={() => handleCreateFeeAdjustment(plan, "SCHOLARSHIP")} className="rounded-lg border border-indigo-600 px-3 py-2 text-sm font-medium text-indigo-600">Scholarship</button><button onClick={() => handleCreateFeeAdjustment(plan, "WAIVER")} className="rounded-lg border border-amber-600 px-3 py-2 text-sm font-medium text-amber-700">Waiver</button><button onClick={() => handleInvoiceFeePlan(plan)} className="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium text-white">Generate invoice</button></div></div>)}</div>
             </div>
           )}
         </>
