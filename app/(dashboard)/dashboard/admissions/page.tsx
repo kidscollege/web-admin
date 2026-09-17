@@ -395,6 +395,34 @@ export default function AdmissionsPage() {
                     <p className="font-medium">{selectedApp.notes}</p>
                   </div>
                 )}
+                <div className="col-span-2">
+                  <p className="text-gray-500">Interview Date</p>
+                  <p className="font-medium">
+                    {selectedApp.interviewDate
+                      ? new Date(selectedApp.interviewDate).toLocaleString()
+                      : "Not scheduled"}
+                  </p>
+                </div>
+                <div className="col-span-2">
+                  <p className="mb-2 text-gray-500">Submitted Documents</p>
+                  {Array.isArray(selectedApp.documents) && selectedApp.documents.length > 0 ? (
+                    <div className="space-y-2">
+                      {selectedApp.documents.map((document: any, index: number) => (
+                        <a
+                          key={`${document.fileUrl || document.name}-${index}`}
+                          href={document.fileUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="block rounded-lg border border-gray-200 px-3 py-2 text-sm text-blue-600 hover:bg-blue-50"
+                        >
+                          {document.name || document.type || `Document ${index + 1}`}
+                        </a>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="font-medium">No documents submitted</p>
+                  )}
+                </div>
               </div>
 
               {/* Actions */}
@@ -507,11 +535,11 @@ export default function AdmissionsPage() {
             <tbody className="text-blue-800">
               <tr className="border-t border-blue-100">
                 <td className="py-2 pr-4 font-medium">SUBMITTED</td>
-                <td className="py-2">Mark Under Review, Approve, Reject</td>
+                <td className="py-2">Mark Under Review</td>
               </tr>
               <tr className="border-t border-blue-100">
                 <td className="py-2 pr-4 font-medium">UNDER_REVIEW</td>
-                <td className="py-2">Approve, Reject</td>
+                <td className="py-2">Schedule Interview, Approve, Reject</td>
               </tr>
               <tr className="border-t border-blue-100">
                 <td className="py-2 pr-4 font-medium">APPROVED</td>
