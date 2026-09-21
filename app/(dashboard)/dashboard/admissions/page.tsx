@@ -141,6 +141,25 @@ export default function AdmissionsPage() {
     }
   };
 
+  const handlePrintOffer = () => {
+    if (!offerDetails) return;
+    const applicantName = [
+      offerDetails.applicant?.firstName,
+      offerDetails.applicant?.middleName,
+      offerDetails.applicant?.lastName,
+    ].filter(Boolean).join(" ");
+    const offerWindow = window.open("", "_blank", "width=900,height=700");
+    if (!offerWindow) {
+      alert("Allow pop-ups to print the admission offer");
+      return;
+    }
+
+    offerWindow.document.write(`<!doctype html><html><head><title>Admission Offer ${offerDetails.applicationNo}</title><style>body{font-family:Arial,sans-serif;color:#172033;max-width:760px;margin:50px auto;padding:0 30px;line-height:1.6}header{text-align:center;border-bottom:2px solid #2e1a5a;padding-bottom:20px}h1{color:#2e1a5a;margin:0}h2{color:#4b2e83;margin-top:36px}.meta{display:grid;grid-template-columns:1fr 1fr;gap:12px;background:#f8f5ff;padding:18px;margin-top:24px}.signature{margin-top:60px}small{color:#64748b}</style></head><body><header><h1>Kids College</h1><p>Admission Offer Letter</p></header><p>Date: ${new Date().toLocaleDateString()}</p><p>Dear ${offerDetails.parent?.name || "Parent/Guardian"},</p><p>We are pleased to offer <strong>${applicantName}</strong> admission consideration at Kids College for the following class:</p><div class="meta"><div><small>Application Number</small><br><strong>${offerDetails.applicationNo}</strong></div><div><small>Applying Class</small><br><strong>${offerDetails.applyingClass || "To be confirmed"}</strong></div><div><small>Application Status</small><br><strong>${offerDetails.status}</strong></div><div><small>Interview Outcome</small><br><strong>${offerDetails.interviewOutcome || "Not recorded"}</strong></div></div><h2>Next Steps</h2><p>Please contact the school administration to confirm acceptance requirements, fees, documentation, and the admission deadline.</p><div class="signature"><p>____________________________</p><p><strong>Admissions Office</strong><br>Kids College</p></div><small>This document is generated from the school management system and should be confirmed by the admissions office.</small></body></html>`);
+    offerWindow.document.close();
+    offerWindow.focus();
+    offerWindow.print();
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "SUBMITTED":
@@ -462,6 +481,7 @@ export default function AdmissionsPage() {
                       <p><strong>Class:</strong> {offerDetails.applyingClass || "Not specified"}</p>
                       <p><strong>Status:</strong> {offerDetails.status}</p>
                       {offerDetails.interviewOutcome && <p><strong>Interview outcome:</strong> {offerDetails.interviewOutcome}</p>}
+                      <button onClick={handlePrintOffer} className="mt-3 rounded-lg bg-[#2E1A5A] px-3 py-2 text-sm font-medium text-white">Print offer letter</button>
                     </div>
                   )}
                 </div>
