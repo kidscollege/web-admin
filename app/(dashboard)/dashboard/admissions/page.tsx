@@ -16,6 +16,7 @@ export default function AdmissionsPage() {
   const [selectedApp, setSelectedApp] = useState<any>(null);
   const [submitting, setSubmitting] = useState(false);
   const [interviewDate, setInterviewDate] = useState("");
+  const [interviewOutcome, setInterviewOutcome] = useState("");
   const [credentials, setCredentials] = useState<{
     title: string;
     email: string;
@@ -113,8 +114,12 @@ export default function AdmissionsPage() {
       await api.patch(`/admissions/applications/${selectedApp.id}/stage`, {
         status,
         ...(status === "INTERVIEW_SCHEDULED" ? { interviewDate } : {}),
+        ...(status === "APPROVED" && selectedApp.status === "INTERVIEW_SCHEDULED"
+          ? { interviewOutcome: interviewOutcome.trim() || undefined }
+          : {}),
       });
       setInterviewDate("");
+      setInterviewOutcome("");
       setShowModal(false);
       setSelectedApp(null);
       fetchData();
@@ -403,6 +408,12 @@ export default function AdmissionsPage() {
                       : "Not scheduled"}
                   </p>
                 </div>
+                {selectedApp.interviewOutcome && (
+                  <div className="col-span-2">
+                    <p className="text-gray-500">Interview Outcome</p>
+                    <p className="font-medium">{selectedApp.interviewOutcome}</p>
+                  </div>
+                )}
                 <div className="col-span-2">
                   <p className="mb-2 text-gray-500">Submitted Documents</p>
                   {Array.isArray(selectedApp.documents) && selectedApp.documents.length > 0 ? (
@@ -472,13 +483,21 @@ export default function AdmissionsPage() {
                         </>
                       )}
                       {selectedApp.status === "INTERVIEW_SCHEDULED" && (
-                        <button
-                          onClick={() => handleStage("APPROVED")}
-                          disabled={submitting}
-                          className="col-span-2 bg-green-600 hover:bg-green-700 text-white py-2.5 rounded-lg text-sm font-medium disabled:opacity-50"
-                        >
-                          Approve Interview
-                        </button>
+                        <>
+                          <textarea
+                            value={interviewOutcome}
+                            onChange={(event) => setInterviewOutcome(event.target.value)}
+                            placeholder="Interview outcome or assessment"
+                            className="col-span-2 min-h-20 rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                          />
+                          <button
+                            onClick={() => handleStage("APPROVED")}
+                            disabled={submitting}
+                            className="col-span-2 bg-green-600 hover:bg-green-700 text-white py-2.5 rounded-lg text-sm font-medium disabled:opacity-50"
+                          >
+                            Approve Interview
+                          </button>
+                        </>
                       )}
                       {selectedApp.status === "APPROVED" && (
                         <button
