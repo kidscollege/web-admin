@@ -22,6 +22,7 @@ export default function AdmissionsPage() {
     email: string;
     temporaryPassword: string;
   } | null>(null);
+  const [offerDetails, setOfferDetails] = useState<any>(null);
 
   const fetchData = async () => {
     try {
@@ -127,6 +128,16 @@ export default function AdmissionsPage() {
       alert(err.response?.data?.message || "Failed to update application stage");
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleViewOffer = async () => {
+    if (!selectedApp) return;
+    try {
+      const res = await api.get(`/admissions/applications/${selectedApp.id}/offer`);
+      setOfferDetails(res.data);
+    } catch (err: any) {
+      alert(err.response?.data?.message || "Failed to load offer details");
     }
   };
 
@@ -435,6 +446,26 @@ export default function AdmissionsPage() {
                   )}
                 </div>
               </div>
+
+              {(["APPROVED", "OFFER_SENT", "ACCEPTED", "ADMITTED"] as string[]).includes(selectedApp.status) && (
+                <div className="rounded-xl border border-cyan-200 bg-cyan-50 p-4">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <p className="font-semibold text-cyan-950">Admission offer</p>
+                      <p className="text-sm text-cyan-800">Offer details are available for this application.</p>
+                    </div>
+                    <button onClick={handleViewOffer} className="rounded-lg bg-cyan-700 px-3 py-2 text-sm font-medium text-white">View offer</button>
+                  </div>
+                  {offerDetails?.applicationNo === selectedApp.applicationNo && (
+                    <div className="mt-3 border-t border-cyan-200 pt-3 text-sm text-cyan-950">
+                      <p><strong>Applicant:</strong> {offerDetails.applicant?.firstName} {offerDetails.applicant?.middleName || ""} {offerDetails.applicant?.lastName}</p>
+                      <p><strong>Class:</strong> {offerDetails.applyingClass || "Not specified"}</p>
+                      <p><strong>Status:</strong> {offerDetails.status}</p>
+                      {offerDetails.interviewOutcome && <p><strong>Interview outcome:</strong> {offerDetails.interviewOutcome}</p>}
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Actions */}
               {selectedApp.status !== "ADMITTED" &&
