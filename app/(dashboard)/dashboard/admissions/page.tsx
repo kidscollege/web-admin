@@ -17,6 +17,7 @@ export default function AdmissionsPage() {
   const [submitting, setSubmitting] = useState(false);
   const [interviewDate, setInterviewDate] = useState("");
   const [interviewOutcome, setInterviewOutcome] = useState("");
+  const [offerExpiresAt, setOfferExpiresAt] = useState("");
   const [credentials, setCredentials] = useState<{
     title: string;
     email: string;
@@ -118,9 +119,11 @@ export default function AdmissionsPage() {
         ...(status === "APPROVED" && selectedApp.status === "INTERVIEW_SCHEDULED"
           ? { interviewOutcome: interviewOutcome.trim() || undefined }
           : {}),
+        ...(status === "OFFER_SENT" ? { offerExpiresAt } : {}),
       });
       setInterviewDate("");
       setInterviewOutcome("");
+      setOfferExpiresAt("");
       setShowModal(false);
       setSelectedApp(null);
       fetchData();
@@ -480,6 +483,7 @@ export default function AdmissionsPage() {
                       <p><strong>Applicant:</strong> {offerDetails.applicant?.firstName} {offerDetails.applicant?.middleName || ""} {offerDetails.applicant?.lastName}</p>
                       <p><strong>Class:</strong> {offerDetails.applyingClass || "Not specified"}</p>
                       <p><strong>Status:</strong> {offerDetails.status}</p>
+                      {offerDetails.offerExpiresAt && <p><strong>Offer expires:</strong> {new Date(offerDetails.offerExpiresAt).toLocaleDateString()}</p>}
                       {offerDetails.interviewOutcome && <p><strong>Interview outcome:</strong> {offerDetails.interviewOutcome}</p>}
                       <button onClick={handlePrintOffer} className="mt-3 rounded-lg bg-[#2E1A5A] px-3 py-2 text-sm font-medium text-white">Print offer letter</button>
                     </div>
@@ -551,13 +555,22 @@ export default function AdmissionsPage() {
                         </>
                       )}
                       {selectedApp.status === "APPROVED" && (
-                        <button
-                          onClick={() => handleStage("OFFER_SENT")}
-                          disabled={submitting}
-                          className="col-span-2 bg-cyan-600 hover:bg-cyan-700 text-white py-2.5 rounded-lg text-sm font-medium disabled:opacity-50"
-                        >
-                          Send Admission Offer
-                        </button>
+                        <>
+                          <input
+                            type="date"
+                            value={offerExpiresAt}
+                            onChange={(event) => setOfferExpiresAt(event.target.value)}
+                            className="col-span-2 rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                            aria-label="Offer expiry date"
+                          />
+                          <button
+                            onClick={() => handleStage("OFFER_SENT")}
+                            disabled={submitting || !offerExpiresAt}
+                            className="col-span-2 bg-cyan-600 hover:bg-cyan-700 text-white py-2.5 rounded-lg text-sm font-medium disabled:opacity-50"
+                          >
+                            Send Admission Offer
+                          </button>
+                        </>
                       )}
                       {selectedApp.status === "OFFER_SENT" && (
                         <button
