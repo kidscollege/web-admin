@@ -212,6 +212,9 @@ export default function StudentResultsPage() {
                             Grade
                           </th>
                           <th className="text-left px-5 py-3 font-medium text-gray-600">
+                            Weighted
+                          </th>
+                          <th className="text-left px-5 py-3 font-medium text-gray-600">
                             Remark
                           </th>
                         </tr>
@@ -233,6 +236,9 @@ export default function StudentResultsPage() {
                             </td>
                             <td className="px-5 py-3 font-semibold text-[#4B2E83]">
                               {item.grading?.grade || "—"} ({item.grading?.percentage ?? "—"}%)
+                            </td>
+                            <td className="px-5 py-3 text-gray-600">
+                              {item.grading?.weightedContribution ?? "—"}
                             </td>
                             <td className="px-5 py-3 text-gray-600">
                               {item.remark || "—"}
@@ -260,6 +266,9 @@ export default function StudentResultsPage() {
                         </p>
                         <p className="text-sm font-semibold text-[#4B2E83] mt-1">
                           Grade: {item.grading?.grade || "—"} · {item.grading?.percentage ?? "—"}% · {item.grading?.remark || "Not graded"}
+                        </p>
+                        <p className="text-sm text-gray-600 mt-1">
+                          Weighted contribution: {item.grading?.weightedContribution ?? "—"}
                         </p>
                         {item.remark && (
                           <p className="text-sm text-gray-600 mt-1">

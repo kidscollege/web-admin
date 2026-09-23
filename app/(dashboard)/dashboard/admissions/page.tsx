@@ -24,6 +24,7 @@ export default function AdmissionsPage() {
     temporaryPassword: string;
   } | null>(null);
   const [offerDetails, setOfferDetails] = useState<any>(null);
+  const [applicationTimeline, setApplicationTimeline] = useState<any[]>([]);
 
   const fetchData = async () => {
     try {
@@ -141,6 +142,16 @@ export default function AdmissionsPage() {
       setOfferDetails(res.data);
     } catch (err: any) {
       alert(err.response?.data?.message || "Failed to load offer details");
+    }
+  };
+
+  const handleViewTimeline = async () => {
+    if (!selectedApp) return;
+    try {
+      const res = await api.get(`/admissions/applications/${selectedApp.id}/timeline`);
+      setApplicationTimeline(res.data || []);
+    } catch (err: any) {
+      alert(err.response?.data?.message || "Failed to load application timeline");
     }
   };
 
@@ -490,6 +501,29 @@ export default function AdmissionsPage() {
                   )}
                 </div>
               )}
+
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <p className="font-semibold text-slate-800">Application history</p>
+                    <p className="text-sm text-slate-600">Review recorded status changes and admission actions.</p>
+                  </div>
+                  <button onClick={handleViewTimeline} className="rounded-lg border border-slate-400 px-3 py-2 text-sm font-medium text-slate-700">Load history</button>
+                </div>
+                {applicationTimeline.length > 0 && (
+                  <div className="mt-3 space-y-2 border-t border-slate-200 pt-3">
+                    {applicationTimeline.map((event) => (
+                      <div key={event.id} className="rounded-lg bg-white p-3 text-sm">
+                        <div className="flex flex-wrap justify-between gap-2">
+                          <strong className="text-slate-800">{event.action.replaceAll("_", " ")}</strong>
+                          <span className="text-xs text-slate-500">{new Date(event.createdAt).toLocaleString()}</span>
+                        </div>
+                        <p className="mt-1 text-xs text-slate-500">{event.user ? `By ${event.user.firstName} ${event.user.lastName}` : "System action"}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
 
               {/* Actions */}
               {selectedApp.status !== "ADMITTED" &&
