@@ -209,6 +209,9 @@ export default function StudentResultsPage() {
                             Max
                           </th>
                           <th className="text-left px-5 py-3 font-medium text-gray-600">
+                            Grade
+                          </th>
+                          <th className="text-left px-5 py-3 font-medium text-gray-600">
                             Remark
                           </th>
                         </tr>
@@ -227,6 +230,9 @@ export default function StudentResultsPage() {
                             </td>
                             <td className="px-5 py-3 text-gray-600">
                               {item.assessment?.maxScore}
+                            </td>
+                            <td className="px-5 py-3 font-semibold text-[#4B2E83]">
+                              {item.grading?.grade || "—"} ({item.grading?.percentage ?? "—"}%)
                             </td>
                             <td className="px-5 py-3 text-gray-600">
                               {item.remark || "—"}
@@ -251,6 +257,9 @@ export default function StudentResultsPage() {
                         </div>
                         <p className="text-sm text-gray-500">
                           {item.assessment?.term?.name}
+                        </p>
+                        <p className="text-sm font-semibold text-[#4B2E83] mt-1">
+                          Grade: {item.grading?.grade || "—"} · {item.grading?.percentage ?? "—"}% · {item.grading?.remark || "Not graded"}
                         </p>
                         {item.remark && (
                           <p className="text-sm text-gray-600 mt-1">
