@@ -174,6 +174,39 @@ export default function StudentResultsPage() {
             </p>
           </div>
 
+          {resultData.summaries?.overall && (
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              <div className="rounded-xl border border-blue-100 bg-blue-50 p-4">
+                <p className="text-xs text-blue-700">Overall score</p>
+                <p className="mt-1 text-xl font-bold text-blue-950">{resultData.summaries.overall.score} / {resultData.summaries.overall.maxScore}</p>
+              </div>
+              <div className="rounded-xl border border-purple-100 bg-purple-50 p-4">
+                <p className="text-xs text-purple-700">Overall percentage</p>
+                <p className="mt-1 text-xl font-bold text-purple-950">{resultData.summaries.overall.percentage ?? "—"}%</p>
+              </div>
+              <div className="rounded-xl border border-emerald-100 bg-emerald-50 p-4">
+                <p className="text-xs text-emerald-700">Overall grade</p>
+                <p className="mt-1 text-xl font-bold text-emerald-950">{resultData.summaries.overall.grading?.grade || "—"}</p>
+              </div>
+              <div className="rounded-xl border border-amber-100 bg-amber-50 p-4">
+                <p className="text-xs text-amber-700">Performance</p>
+                <p className="mt-1 text-sm font-bold text-amber-950">{resultData.summaries.overall.grading?.remark || "Not graded"}</p>
+              </div>
+            </div>
+          )}
+
+          {resultData.summaries?.subjects?.length > 0 && (
+            <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm">
+              <div className="border-b bg-gray-50 px-5 py-3">
+                <h3 className="font-semibold text-gray-800">Subject summary</h3>
+              </div>
+              <table className="w-full text-sm">
+                <thead><tr className="border-b"><th className="px-5 py-3 text-left font-medium text-gray-600">Subject</th><th className="px-5 py-3 text-left font-medium text-gray-600">Score</th><th className="px-5 py-3 text-left font-medium text-gray-600">Percentage</th><th className="px-5 py-3 text-left font-medium text-gray-600">Grade</th><th className="px-5 py-3 text-left font-medium text-gray-600">Remark</th></tr></thead>
+                <tbody>{resultData.summaries.subjects.map((subject: any) => <tr key={subject.subjectId} className="border-b last:border-0"><td className="px-5 py-3 font-medium">{subject.subjectName}</td><td className="px-5 py-3">{subject.score} / {subject.maxScore}</td><td className="px-5 py-3">{subject.percentage ?? "—"}%</td><td className="px-5 py-3 font-semibold text-[#4B2E83]">{subject.grading?.grade || "—"}</td><td className="px-5 py-3 text-gray-600">{subject.grading?.remark || "Not graded"}</td></tr>)}</tbody>
+              </table>
+            </div>
+          )}
+
           {resultData.scores?.length === 0 ? (
             <div className="bg-white rounded-xl p-8 text-center text-gray-500">
               No scores found for this student
