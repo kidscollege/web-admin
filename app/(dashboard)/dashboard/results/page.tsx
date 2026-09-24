@@ -15,6 +15,8 @@ export default function ResultsPage() {
   const [terms, setTerms] = useState<any[]>([]);
   const [subjects, setSubjects] = useState<any[]>([]);
   const [students, setStudents] = useState<any[]>([]);
+  const [gradingScheme, setGradingScheme] = useState<any>(null);
+  const [savingGradingScheme, setSavingGradingScheme] = useState(false);
 
   const [showAssessmentModal, setShowAssessmentModal] = useState(false);
   const [showScoreModal, setShowScoreModal] = useState(false);
@@ -41,17 +43,29 @@ export default function ResultsPage() {
 
   const fetchData = async () => {
     try {
-      const [assessmentsRes, subjectsRes, studentsRes, sessionsRes] =
+      const [assessmentsRes, subjectsRes, studentsRes, sessionsRes, gradingRes] =
         await Promise.all([
           api.get("/results/assessments"),
           api.get("/academics/subjects"),
           api.get("/students"),
           api.get("/academics/sessions"),
+          api.get("/results/grading-schemes/current"),
         ]);
 
       setAssessments(assessmentsRes.data || []);
       setSubjects(subjectsRes.data || []);
       setStudents(studentsRes.data?.data || []);
+      setGradingScheme(gradingRes.data || {
+        name: "Standard grading scheme",
+        bands: [
+          { minPercentage: 75, grade: "A", remark: "Excellent" },
+          { minPercentage: 65, grade: "B", remark: "Very Good" },
+          { minPercentage: 55, grade: "C", remark: "Good" },
+          { minPercentage: 45, grade: "D", remark: "Pass" },
+          { minPercentage: 40, grade: "E", remark: "Weak Pass" },
+          { minPercentage: 0, grade: "F", remark: "Fail" },
+        ],
+      });
 
       const currentSession = (sessionsRes.data || []).find((s: any) => s.isCurrent);
       if (currentSession) {
@@ -78,6 +92,26 @@ export default function ResultsPage() {
     }
     fetchData();
   }, []);
+
+  const handleSaveGradingScheme = async () => {
+    if (!gradingScheme?.name || !gradingScheme?.bands?.length) return;
+    setSavingGradingScheme(true);
+    try {
+      await api.post("/results/grading-schemes", {
+        name: gradingScheme.name,
+        bands: gradingScheme.bands.map((band: any) => ({
+          minPercentage: Number(band.minPercentage),
+          grade: band.grade,
+          remark: band.remark,
+        })),
+      });
+      alert("Grading scheme saved");
+    } catch (err: any) {
+      alert(err.response?.data?.message || "Failed to save grading scheme");
+    } finally {
+      setSavingGradingScheme(false);
+    }
+  };
 
   const openAssessmentModal = (assessment?: any) => {
     if (assessment) {
@@ -249,6 +283,27 @@ export default function ResultsPage() {
 </div>
 
       {/* Tabs */}
+      {gradingScheme && (
+        <div className="mb-6 rounded-xl border border-purple-100 bg-purple-50 p-4 sm:p-5">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h3 className="font-semibold text-[#2E1A5A]">Grading scheme</h3>
+              <p className="text-sm text-gray-600">Configure the grade labels used in student results.</p>
+            </div>
+            <button onClick={handleSaveGradingScheme} disabled={savingGradingScheme} className="rounded-lg bg-[#4B2E83] px-4 py-2 text-sm font-medium text-white disabled:opacity-50">{savingGradingScheme ? "Saving..." : "Save scheme"}</button>
+          </div>
+          <input value={gradingScheme.name} onChange={(e) => setGradingScheme({ ...gradingScheme, name: e.target.value })} className="mb-3 w-full rounded-lg border border-purple-200 bg-white px-3 py-2 text-sm" placeholder="Scheme name" />
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            {gradingScheme.bands.map((band: any, index: number) => (
+              <div key={`${band.grade}-${index}`} className="grid grid-cols-[80px_1fr_1fr] gap-2 rounded-lg bg-white p-2">
+                <input type="number" min="0" max="100" value={band.minPercentage} onChange={(e) => { const bands = [...gradingScheme.bands]; bands[index] = { ...band, minPercentage: e.target.value }; setGradingScheme({ ...gradingScheme, bands }); }} className="rounded border px-2 py-1 text-sm" aria-label={`Minimum percentage for band ${index + 1}`} />
+                <input value={band.grade} onChange={(e) => { const bands = [...gradingScheme.bands]; bands[index] = { ...band, grade: e.target.value }; setGradingScheme({ ...gradingScheme, bands }); }} className="rounded border px-2 py-1 text-sm" aria-label={`Grade label for band ${index + 1}`} />
+                <input value={band.remark} onChange={(e) => { const bands = [...gradingScheme.bands]; bands[index] = { ...band, remark: e.target.value }; setGradingScheme({ ...gradingScheme, bands }); }} className="rounded border px-2 py-1 text-sm" aria-label={`Remark for band ${index + 1}`} />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
       <div className="flex gap-2 mb-6 overflow-x-auto pb-1">
         {[
           { key: "assessments", label: "Assessments" },
